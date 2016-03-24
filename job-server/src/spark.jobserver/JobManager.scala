@@ -44,8 +44,10 @@ object JobManager {
     } else {
       defaultConfig
     }
-    logger.info("Starting JobManager named " + managerName + " with config {}",
-      config.getConfig("spark").root.render())
+    logger.info(
+      "Starting JobManager named " + managerName + " with config {}",
+      config.getConfig("spark").root.render()
+    )
     logger.info("..and context config:\n" + contextConfig.root.render)
 
     val system = makeSystem(config.resolve())
@@ -64,8 +66,10 @@ object JobManager {
   def main(args: Array[String]) {
     import scala.collection.JavaConverters._
     def makeManagerSystem(name: String)(config: Config): ActorSystem = {
-      val configWithRole = config.withValue("akka.cluster.roles",
-        ConfigValueFactory.fromIterable(List("manager").asJava))
+      val configWithRole = config.withValue(
+        "akka.cluster.roles",
+        ConfigValueFactory.fromIterable(List("manager").asJava)
+      )
       ActorSystem(name, configWithRole)
     }
     start(args, makeManagerSystem("JobServer")(_))

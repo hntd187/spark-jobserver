@@ -57,14 +57,18 @@ object JobServer {
     try {
       val jobDAO = ctor.newInstance(config).asInstanceOf[JobDAO]
       val daoActor = system.actorOf(Props(classOf[JobDAOActor], jobDAO), "dao-manager")
-      val dataManager = system.actorOf(Props(classOf[DataManagerActor],
-          new DataFileDAO(config)), "data-manager")
+      val dataManager = system.actorOf(Props(
+        classOf[DataManagerActor],
+        new DataFileDAO(config)
+      ), "data-manager")
       val jarManager = system.actorOf(Props(classOf[JarManager], daoActor), "jar-manager")
       val contextPerJvm = config.getBoolean("spark.jobserver.context-per-jvm")
       val supervisor =
-        system.actorOf(Props(if (contextPerJvm) { classOf[AkkaClusterSupervisorActor] }
-                             else               { classOf[LocalContextSupervisorActor] }, daoActor),
-                       "context-supervisor")
+        system.actorOf(
+          Props(if (contextPerJvm) { classOf[AkkaClusterSupervisorActor] }
+          else { classOf[LocalContextSupervisorActor] }, daoActor),
+          "context-supervisor"
+        )
       val jobInfo = system.actorOf(Props(classOf[JobInfoActor], jobDAO, supervisor), "job-info")
 
       // Add initial job JARs, if specified in configuration.
@@ -123,12 +127,13 @@ object JobServer {
   def main(args: Array[String]) {
     import scala.collection.JavaConverters._
     def makeSupervisorSystem(name: String)(config: Config): ActorSystem = {
-      val configWithRole = config.withValue("akka.cluster.roles",
-        ConfigValueFactory.fromIterable(List("supervisor").asJava))
+      val configWithRole = config.withValue(
+        "akka.cluster.roles",
+        ConfigValueFactory.fromIterable(List("supervisor").asJava)
+      )
       ActorSystem(name, configWithRole)
     }
     start(args, makeSupervisorSystem("JobServer")(_))
   }
-
 
 }

@@ -1,10 +1,8 @@
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-=======
+
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.1.10")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.5")
 
->>>>>>> Part of an extensive update for this...
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.2")       // For quick restarts for web development
 
 addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")

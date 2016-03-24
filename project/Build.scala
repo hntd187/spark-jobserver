@@ -1,8 +1,9 @@
+import com.typesafe.sbt.SbtScalariform._
+import sbt.Keys._
 import sbt._
-import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import spray.revolver.RevolverPlugin._
-import com.typesafe.sbt.SbtScalariform._
+
 import scalariform.formatter.preferences._
 
 // There are advantages to using real Scala build files with SBT:
@@ -95,57 +96,6 @@ object JobServerBuild extends Build {
     exportJars := true        // use the jar instead of target/classes
   )
 
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-  import sbtdocker.DockerKeys._
-
-  lazy val dockerSettings = Seq(
-    // Make the docker task depend on the assembly task, which generates a fat JAR file
-    docker <<= (docker dependsOn (assembly in jobServerExtras)),
-    dockerfile in docker := {
-      val artifact = (outputPath in assembly in jobServerExtras).value
-      val artifactTargetPath = s"/app/${artifact.name}"
-      new sbtdocker.mutable.Dockerfile {
-        from("java:7-jre")
-        // Dockerfile best practices: https://docs.docker.com/articles/dockerfile_best-practices/
-        expose(8090)
-        expose(9999)    // for JMX
-        env("MESOS_VERSION", mesosVersion)
-        runRaw("""echo "deb http://repos.mesosphere.io/ubuntu/ trusty main" > /etc/apt/sources.list.d/mesosphere.list && \
-                  apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
-                  apt-get -y update && \
-                  apt-get -y install mesos=${MESOS_VERSION} && \
-                  apt-get clean
-               """)
-        copy(artifact, artifactTargetPath)
-        copy(baseDirectory(_ / "bin" / "server_start.sh").value, file("app/server_start.sh"))
-        copy(baseDirectory(_ / "bin" / "server_stop.sh").value, file("app/server_stop.sh"))
-        copy(baseDirectory(_ / "config" / "log4j-stdout.properties").value, file("app/log4j-server.properties"))
-        copy(baseDirectory(_ / "config" / "docker.conf").value, file("app/docker.conf"))
-        copy(baseDirectory(_ / "config" / "docker.sh").value, file("app/settings.sh"))
-        // Including envs in Dockerfile makes it easy to override from docker command
-        env("JOBSERVER_MEMORY", "1G")
-        env("SPARK_HOME", "/spark")
-        env("SPARK_BUILD", s"spark-${sparkVersion}-bin-hadoop2.4")
-        // Use a volume to persist database between container invocations
-        run("mkdir", "-p", "/database")
-        runRaw("""wget http://d3kbcqa49mib13.cloudfront.net/$SPARK_BUILD.tgz && \
-                  tar -xvf $SPARK_BUILD.tgz && \
-                  mv $SPARK_BUILD /spark && \
-                  rm $SPARK_BUILD.tgz
-               """)
-        volume("/database")
-        entryPoint("app/server_start.sh")
-      }
-    },
-    imageNames in docker := Seq(
-      sbtdocker.ImageName(namespace = Some("velvia"),
-                          repository = "spark-jobserver",
-                          tag = Some(s"${version.value}.mesos-${mesosVersion.split('-')(0)}.spark-${sparkVersion}"))
-    )
-  )
-
-=======
->>>>>>> Part of an extensive update for this...
   lazy val rootSettings = Seq(
     // Must run Spark tests sequentially because they compete for port 4040!
     parallelExecution in Test := false,
@@ -180,13 +130,8 @@ object JobServerBuild extends Build {
   lazy val commonSettings = Defaults.coreDefaultSettings ++ dirSettings ++ implicitlySettings ++ Seq(
     organization := "spark.jobserver",
     crossPaths   := true,
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-    crossScalaVersions := Seq("2.10.5","2.11.6"),
-    scalaVersion := "2.10.5",
-=======
     crossScalaVersions := Seq("2.10.6","2.11.8"),
     scalaVersion := "2.10.6",
->>>>>>> Part of an extensive update for this...
     publishTo    := Some(Resolver.file("Unused repo", file("target/unusedrepo"))),
 
     // scalastyleFailOnError := true,

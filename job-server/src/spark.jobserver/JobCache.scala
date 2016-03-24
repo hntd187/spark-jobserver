@@ -11,9 +11,11 @@ import spark.jobserver.util.{ContextURLClassLoader, JarUtils, LRUCache}
 
 import scala.util.{Success, Failure}
 
-case class JobJarInfo(constructor: () => SparkJobBase,
-                      className: String,
-                      jarFilePath: String)
+case class JobJarInfo(
+  constructor: () => SparkJobBase,
+  className:   String,
+  jarFilePath: String
+)
 
 /**
  * A cache for SparkJob classes.  A lot of times jobs are run repeatedly, and especially for low-latency

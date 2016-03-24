@@ -1,35 +1,42 @@
 package spark.jobserver
 
 import java.lang.Thread
-import java.util.concurrent.Executors._
-import akka.actor.{ActorRef, Props, PoisonPill}
-import com.typesafe.config.Config
 import java.net.{URI, URL}
+import java.util.concurrent.Executors._
 import java.util.concurrent.atomic.AtomicInteger
+
+import akka.actor.{ActorRef, PoisonPill, Props}
+import com.typesafe.config.Config
 import ooyala.common.akka.InstrumentedActor
-import org.apache.spark.{SparkEnv, SparkContext}
+import org.apache.spark.SparkEnv
 import org.joda.time.DateTime
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Failure, Success, Try}
-import spark.jobserver.ContextSupervisor.StopContext
-
-import spark.jobserver.io.{JobDAOActor, JobDAO, JobInfo, JarInfo}
-
+import spark.jobserver.io.{JarInfo, JobDAO, JobDAOActor, JobInfo}
 import spark.jobserver.util.{ContextURLClassLoader, SparkJobUtils}
 
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
+
 object JobManagerActor {
+
   // Messages
   case class Initialize(daoActor: ActorRef, resultActorOpt: Option[ActorRef])
+
   case class StartJob(appName: String, classPath: String, config: Config,
                       subscribedEvents: Set[Class[_]])
+
   case class KillJob(jobId: String)
+
   case object SparkContextStatus
 
   // Results/Data
   case class Initialized(contextName: String, resultActor: ActorRef)
+
   case class InitError(t: Throwable)
+
   case class JobLoadingError(err: Throwable)
+
   case object SparkContextAlive
+
   case object SparkContextDead
 
   // Akka 2.2.x style actor props for actor creation
@@ -66,20 +73,21 @@ object JobManagerActor {
  */
 
 class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
+  /*
+  class JobManagerActor(
+                         dao: JobDAO,
+                         contextName: String,
+                         contextConfig: Config,
+                         isAdHoc: Boolean,
+                         resultActorRef: Option[ActorRef] = None
+                       ) extends InstrumentedActor {
 
-class JobManagerActor(
-    dao:            JobDAO,
-    contextName:    String,
-    contextConfig:  Config,
-    isAdHoc:        Boolean,
-    resultActorRef: Option[ActorRef] = None
-) extends InstrumentedActor {
-
-
+  */
   import CommonMessages._
   import JobManagerActor._
-  import scala.util.control.Breaks._
+
   import collection.JavaConverters._
+  import scala.util.control.Breaks._
 
   val config = context.system.settings.config
   private val maxRunningJobs = SparkJobUtils.getMaxRunningJobs(config)
@@ -143,7 +151,7 @@ class JobManagerActor(
       val loadedJars = jarLoader.getURLs
       getSideJars(jobConfig).foreach { jarUri =>
         val jarToLoad = new URL(convertJarUriSparkToJava(jarUri))
-        if(! loadedJars.contains(jarToLoad)){
+        if (!loadedJars.contains(jarToLoad)) {
           logger.info("Adding {} to Current Job Class path", jarUri)
           jarLoader.addURL(new URL(convertJarUriSparkToJava(jarUri)))
           jobContext.sparkContext.addJar(jarUri)
@@ -174,25 +182,29 @@ class JobManagerActor(
     }
   }
 
-  def startJobInternal(appName: String,
-                       classPath: String,
-                       jobConfig: Config,
-                       events: Set[Class[_]],
-                       jobContext: ContextLike,
-                       sparkEnv: SparkEnv): Option[Future[Any]] = {
+  def startJobInternal(
+    appName:    String,
+    classPath:  String,
+    jobConfig:  Config,
+    events:     Set[Class[_]],
+    jobContext: ContextLike,
+    sparkEnv:   SparkEnv
+  ): Option[Future[Any]] = {
 
     var future: Option[Future[Any]] = None
     breakable {
       import akka.pattern.ask
       import akka.util.Timeout
-      import scala.concurrent.duration._
+
       import scala.concurrent.Await
+      import scala.concurrent.duration._
 
       val daoAskTimeout = Timeout(3 seconds)
       // TODO: refactor so we don't need Await, instead flatmap into more futures
       val resp = Await.result(
         (daoActor ? JobDAOActor.GetLastUploadTime(appName))(daoAskTimeout).mapTo[JobDAOActor.LastUploadTime],
-        daoAskTimeout.duration)
+        daoAskTimeout.duration
+      )
 
       val lastUploadTime = resp.lastUploadTime
       if (!lastUploadTime.isDefined) {
@@ -240,12 +252,14 @@ class JobManagerActor(
     future
   }
 
-  private def getJobFuture(jobJarInfo: JobJarInfo,
-                           jobInfo: JobInfo,
-                           jobConfig: Config,
-                           subscriber: ActorRef,
-                           jobContext: ContextLike,
-                           sparkEnv: SparkEnv): Future[Any] = {
+  private def getJobFuture(
+    jobJarInfo: JobJarInfo,
+    jobInfo:    JobInfo,
+    jobConfig:  Config,
+    subscriber: ActorRef,
+    jobContext: ContextLike,
+    sparkEnv:   SparkEnv
+  ): Future[Any] = {
 
     val jobId = jobInfo.jobId
     val constructor = jobJarInfo.constructor
@@ -354,4 +368,5 @@ class JobManagerActor(
   private def getSideJars(config: Config): Seq[String] =
     Try(config.getStringList("dependent-jar-uris").asScala.toSeq).
       orElse(Try(config.getString("dependent-jar-uris").split(",").toSeq)).getOrElse(Nil)
+
 }

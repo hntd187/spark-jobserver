@@ -9,7 +9,7 @@ sealed trait SparkJobValidation {
   // it would just hang and timeout. This is something worth investigating
   def &&(sparkValidation: SparkJobValidation): SparkJobValidation = this match {
     case SparkJobValid => sparkValidation
-    case x => x
+    case x             => x
   }
 }
 case object SparkJobValid extends SparkJobValidation

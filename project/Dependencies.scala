@@ -22,12 +22,8 @@ object Dependencies {
   lazy val akkaDeps = Seq(
     // Akka is provided because Spark already includes it, and Spark's version is shaded so it's not safe
     // to use this one
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-    "com.typesafe.akka" %% "akka-slf4j" % "2.3.4" % "provided",
-    "com.typesafe.akka" %% "akka-cluster" % "2.3.4" exclude("com.typesafe.akka", "akka-remote"),
-=======
     "com.typesafe.akka" %% "akka-slf4j" % "2.3.14" % "provided",
->>>>>>> Part of an extensive update for this...
+    "com.typesafe.akka" %% "akka-cluster" % "2.3.14" exclude("com.typesafe.akka", "akka-remote"),
     "io.spray" %% "spray-json" % "1.3.2",
     "io.spray" %% "spray-can" % "1.3.3",
     "io.spray" %% "spray-caching" % "1.3.3",
@@ -37,20 +33,15 @@ object Dependencies {
   ) ++ jodaDeps
 
   val mesosVersion = sys.env.getOrElse("MESOS_VERSION", "0.25.0-0.2.70.ubuntu1404")
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
 
-  val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "1.6.0")
-=======
   val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "1.6.1")
->>>>>>> Part of an extensive update for this...
+
   lazy val sparkDeps = Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
     // Force netty version.  This avoids some Spark netty dependency problem.
     "io.netty" % "netty-all" % "4.0.29.Final"
   )
 
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-=======
   lazy val scalaLib = Seq("org.scala-lang" % "scala-library" % "2.10.6")
 
   /*
@@ -61,7 +52,7 @@ object Dependencies {
   }
   */
 
->>>>>>> Part of an extensive update for this...
+
   lazy val sparkExtraDeps = Seq(
     "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
     "org.apache.spark" %% "spark-sql" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
@@ -71,15 +62,9 @@ object Dependencies {
 
   lazy val slickDeps = Seq(
     "com.typesafe.slick" %% "slick" % "2.1.0",
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-    "com.h2database" % "h2" % "1.3.170",
+    "com.h2database" % "h2" % "1.3.176",
     "commons-dbcp" % "commons-dbcp" % "1.4",
     "org.flywaydb" % "flyway-core" % "3.2.1"
-=======
-    "com.h2database" % "h2" % "1.3.176",
-    "commons-dbcp" % "commons-dbcp" % "1.4"
-    //"org.flywaydb" % "flyway-core" % "3.2.1"
->>>>>>> Part of an extensive update for this...
   )
 
   lazy val logbackDeps = Seq(

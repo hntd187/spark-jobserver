@@ -1,24 +1,20 @@
 package ooyala.common.akka.web
 
-import java.util.concurrent.TimeUnit
-
-import org.scalatest.{Matchers, FunSpec}
+import akka.actor.ActorSystem
+import ooyala.common.akka.metrics.YammerMetrics
+import org.scalatest.{FunSpec, Matchers}
+import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
 
-import spray.http.StatusCodes._
-import com.yammer.metrics.Metrics
-import com.yammer.metrics.core.Gauge
 
-class CommonRoutesSpec extends FunSpec with Matchers with ScalatestRouteTest with CommonRoutes {
-  def actorRefFactory = system
+class CommonRoutesSpec extends FunSpec with Matchers with ScalatestRouteTest with CommonRoutes with YammerMetrics {
+  def actorRefFactory: ActorSystem = system
 
-  val metricCounter = Metrics.newCounter(getClass, "test-counter")
-  val metricMeter = Metrics.newMeter(getClass, "test-meter", "requests", TimeUnit.SECONDS)
-  val metricHistogram = Metrics.newHistogram(getClass, "test-hist")
-  val metricTimer = Metrics.newTimer(getClass, "test-timer", TimeUnit.MILLISECONDS, TimeUnit.SECONDS)
-  val metricGauge = Metrics.newGauge(getClass, "test-gauge", new Gauge[Int] {
-    def value() = 10
-  })
+  val metricCounter = YammerMetrics.metrics.counter("test-counter")
+  val metricMeter = meter("requests")
+  val metricHistogram = histogram("test-hist")
+  val metricTimer = timer("test-timer")
+  val metricGauge = gauge[Int]("test-gauge", 10)
 
   val counterMap = Map("type" -> "counter", "count" -> 0)
   val gaugeMap = Map("type" -> "gauge", "value" -> 10)

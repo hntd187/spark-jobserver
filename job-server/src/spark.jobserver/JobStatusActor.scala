@@ -38,9 +38,12 @@ class JobStatusActor(jobDao: ActorRef) extends InstrumentedActor with YammerMetr
   override def postStop(): Unit = {
     val stopTime = DateTime.now()
     val stoppedInfos = infos.values.map { info =>
-      info.copy(endTime = Some(stopTime),
-                error = Some(new Exception(s"Context (${info.contextName}) for this job was terminated"))) }
-    stoppedInfos.foreach({info => jobDao ! JobDAOActor.SaveJobInfo(info)})
+      info.copy(
+        endTime = Some(stopTime),
+        error = Some(new Exception(s"Context (${info.contextName}) for this job was terminated"))
+      )
+    }
+    stoppedInfos.foreach({ info => jobDao ! JobDAOActor.SaveJobInfo(info) })
   }
 
   override def wrappedReceive: Receive = {

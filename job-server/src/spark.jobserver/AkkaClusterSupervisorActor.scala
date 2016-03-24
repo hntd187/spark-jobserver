@@ -41,8 +41,10 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
 
   val config = context.system.settings.config
   val defaultContextConfig = config.getConfig("spark.context-settings")
-  val contextInitTimeout = config.getDuration("spark.context-settings.context-init-timeout",
-                                                TimeUnit.SECONDS)
+  val contextInitTimeout = config.getDuration(
+    "spark.context-settings.context-init-timeout",
+    TimeUnit.SECONDS
+  )
   val managerStartCommand = config.getString("deploy.manager-start-cmd")
   import context.dispatcher
 
@@ -86,17 +88,15 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
         val actorName = actorRef.path.name
         if (actorName.startsWith("jobManager")) {
           logger.info("Received identify response, attempting to initialize context at {}", memberActors)
-          (for { (isAdHoc, successFunc, failureFunc) <- contextInitInfos.remove(actorName) }
-           yield {
-             initContext(actorName, actorRef, contextInitTimeout)(isAdHoc, successFunc, failureFunc)
-           }).getOrElse({
+          (for { (isAdHoc, successFunc, failureFunc) <- contextInitInfos.remove(actorName) } yield {
+            initContext(actorName, actorRef, contextInitTimeout)(isAdHoc, successFunc, failureFunc)
+          }).getOrElse({
             logger.warn("No initialization or callback found for jobManager actor {}", actorRef.path)
             actorRef ! PoisonPill
 
           })
         }
       }
-
 
     case AddContextsFromConfig =>
       addContextsFromConfig(config)
@@ -162,16 +162,18 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
       contexts.retain { case (name, (jobMgr, resActor)) => jobMgr != actorRef }
   }
 
-  private def initContext(actorName: String, ref: ActorRef, timeoutSecs: Long = 1)
-                         (isAdHoc: Boolean,
-                          successFunc: ActorRef => Unit,
-                          failureFunc: Throwable => Unit): Unit = {
+  private def initContext(actorName: String, ref: ActorRef, timeoutSecs: Long = 1)(
+    isAdHoc:     Boolean,
+    successFunc: ActorRef => Unit,
+    failureFunc: Throwable => Unit
+  ): Unit = {
     import akka.pattern.ask
 
     val resultActor = if (isAdHoc) globalResultActor else context.actorOf(Props(classOf[JobResultActor]))
     (ref ? JobManagerActor.Initialize(
-      daoActor, Some(resultActor)))(Timeout(timeoutSecs.second)).onComplete {
-      case Failure(e:Exception) =>
+      daoActor, Some(resultActor)
+    ))(Timeout(timeoutSecs.second)).onComplete {
+      case Failure(e: Exception) =>
         logger.info("Failed to send initialize message to context " + ref, e)
         ref ! PoisonPill
         failureFunc(e)
@@ -187,25 +189,30 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
     }
   }
 
-  private def startContext(name: String, contextConfig: Config, isAdHoc: Boolean)
-                          (successFunc: ActorRef => Unit)(failureFunc: Throwable => Unit): Unit = {
+  private def startContext(
+    name:          String,
+    contextConfig: Config,
+    isAdHoc:       Boolean
+  )(successFunc: ActorRef => Unit)(failureFunc: Throwable => Unit): Unit = {
     require(!(contexts contains name), "There is already a context named " + name)
     val contextActorName = "jobManager-" + java.util.UUID.randomUUID().toString.substring(16)
 
     logger.info("Starting context with actor name {}", contextActorName)
 
     val contextDir: java.io.File = try {
-        createContextDir(name, contextConfig, isAdHoc, contextActorName)
-      } catch {
-        case e: Exception =>
-          failureFunc(e)
-          return
-      }
+      createContextDir(name, contextConfig, isAdHoc, contextActorName)
+    } catch {
+      case e: Exception =>
+        failureFunc(e)
+        return
+    }
     val pb = Process(s"$managerStartCommand $contextDir ${selfAddress.toString}")
-    val pio = new ProcessIO(_ => (),
-                        stdout => scala.io.Source.fromInputStream(stdout)
-                          .getLines.foreach(println),
-                        stderr => scala.io.Source.fromInputStream(stderr).getLines().foreach(println))
+    val pio = new ProcessIO(
+      _ => (),
+      stdout => scala.io.Source.fromInputStream(stdout)
+        .getLines.foreach(println),
+      stderr => scala.io.Source.fromInputStream(stderr).getLines().foreach(println)
+    )
     logger.info("Starting to execute sub process {}", pb)
     val processStart = Try {
       val process = pb.run(pio)
@@ -223,10 +230,12 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
 
   }
 
-  private def createContextDir(name: String,
-                               contextConfig: Config,
-                               isAdHoc: Boolean,
-                               actorName: String): java.io.File = {
+  private def createContextDir(
+    name:          String,
+    contextConfig: Config,
+    isAdHoc:       Boolean,
+    actorName:     String
+  ): java.io.File = {
     // Create a temporary dir, preferably in the LOG_DIR
     val encodedContextName = java.net.URLEncoder.encode(name, "UTF-8")
     val tmpDir = Option(System.getProperty("LOG_DIR")).map { logDir =>
@@ -236,15 +245,19 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
 
     // Now create the contextConfig merged with the values we need
     val mergedConfig = ConfigFactory.parseMap(
-                         Map("is-adhoc" -> isAdHoc.toString,
-                             "context.name" -> name,
-                             "context.actorname" -> actorName).asJava
-                       ).withFallback(contextConfig)
+      Map(
+      "is-adhoc" -> isAdHoc.toString,
+      "context.name" -> name,
+      "context.actorname" -> actorName
+    ).asJava
+    ).withFallback(contextConfig)
 
     // Write out the config to the temp dir
-    Files.write(tmpDir.resolve("context.conf"),
-                Seq(mergedConfig.root.render(ConfigRenderOptions.concise)).asJava,
-                Charset.forName("UTF-8"))
+    Files.write(
+      tmpDir.resolve("context.conf"),
+      Seq(mergedConfig.root.render(ConfigRenderOptions.concise)).asJava,
+      Charset.forName("UTF-8")
+    )
 
     tmpDir.toFile
   }

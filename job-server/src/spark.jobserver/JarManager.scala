@@ -49,7 +49,6 @@ class JarManager(jobDao: ActorRef) extends InstrumentedActor {
       val resp = (jobDao ? JobDAOActor.GetApps)(daoAskTimeout).mapTo[JobDAOActor.Apps]
       resp.map { msg => msg.apps } pipeTo requestor
 
-
     case StoreLocalJars(localJars) =>
       val success =
         localJars.foldLeft(true) { (success, pair) =>

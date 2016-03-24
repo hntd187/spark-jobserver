@@ -21,13 +21,7 @@ object LongPiJob extends SparkJob {
   private val rand = new Random(now)
 
   def main(args: Array[String]) {
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     val conf = new SparkConf().setMaster("local[4]").setAppName("LongPiJob")
-=======
-    val conf = new SparkConf()
-      .setMaster("local[4]")
-      .setAppName("LongPiJob")
->>>>>>> Part of an extensive update for this...
     val sc = new SparkContext(conf)
     val config = ConfigFactory.parseString("")
     val results = runJob(sc, config)
@@ -40,13 +34,9 @@ object LongPiJob extends SparkJob {
 
   override def runJob(sc: SparkContext, config: Config): Any = {
     val duration = Try(config.getInt("stress.test.longpijob.duration")).getOrElse(5)
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     var hit = 0L
     var total = 0L
-=======
-    var hit: Long = 0
-    var total: Long = 0
->>>>>>> Part of an extensive update for this...
+
     val start = now
     while (stillHaveTime(start, duration)) {
       val counts = estimatePi(sc)

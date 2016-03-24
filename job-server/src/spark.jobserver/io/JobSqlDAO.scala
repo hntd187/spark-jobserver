@@ -13,15 +13,13 @@ import scala.slick.driver.JdbcProfile
 import scala.reflect.runtime.universe
 import org.apache.commons.dbcp.BasicDataSource
 
-import scala.slick.direct.AnnotationMapper.column
-
 class JobSqlDAO(config: Config) extends JobDAO {
   val slickDriverClass = config.getString("spark.jobserver.sqldao.slick-driver")
   val jdbcDriverClass = config.getString("spark.jobserver.sqldao.jdbc-driver")
 
-  val rtmirror = runtimeMirror(getClass.getClassLoader)
-  val profileModule = rtmirror.staticModule(slickDriverClass)
-  val profile = rtmirror.reflectModule(profileModule).instance.asInstanceOf[JdbcProfile]
+  val runtimeMirror = universe.runtimeMirror(getClass.getClassLoader)
+  val profileModule = runtimeMirror.staticModule(slickDriverClass)
+  val profile = runtimeMirror.reflectModule(profileModule).instance.asInstanceOf[JdbcProfile]
 
   import profile.simple._
   private val logger = LoggerFactory.getLogger(getClass)

@@ -1,10 +1,11 @@
 package spark.jobserver
 
 import java.lang.Thread
+
 import akka.actor.{ActorRef, PoisonPill, Props, Terminated}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import ooyala.common.akka.InstrumentedActor
 import spark.jobserver.JobManagerActor.{SparkContextAlive, SparkContextDead, SparkContextStatus}
 import spark.jobserver.io.JobDAO
@@ -126,7 +127,7 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
 
     case GetContext(name) =>
       if (contexts contains name) {
-        val future = (contexts(name)._1 ? SparkContextStatus) (contextTimeout.seconds)
+        val future = (contexts(name)._1 ? SparkContextStatus)(contextTimeout.seconds)
 
         val originator = sender
         future.collect {
@@ -150,11 +151,7 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
       }
 
     case Terminated(actorRef) =>
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-      val name = actorRef.path.name
-=======
       val name: String = actorRef.path.name
->>>>>>> Part of an extensive update for this...
       logger.info("Actor terminated: " + name)
       contexts.remove(name)
   }
@@ -169,21 +166,17 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
     logger.info("Creating a SparkContext named {}", name)
 
     val resultActorRef = if (isAdHoc) Some(globalResultActor) else None
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     val mergedConfig = ConfigFactory.parseMap(
-                         Map("is-adhoc" -> isAdHoc.toString,
-                             "context.name" -> name,
-                             "context.actorname" -> name).asJava
-                       ).withFallback(contextConfig)
+      Map(
+      "is-adhoc" -> isAdHoc.toString,
+      "context.name" -> name,
+      "context.actorname" -> name
+    ).asJava
+    ).withFallback(contextConfig)
     val ref = context.actorOf(JobManagerActor.props(mergedConfig), name)
     (ref ? JobManagerActor.Initialize(
-      dao, resultActorRef))(Timeout(timeoutSecs.second)).onComplete {
-=======
-    val ref = context.actorOf(Props(
-      classOf[JobManagerActor], dao, name, contextConfig, isAdHoc, resultActorRef
-    ), name)
-    (ref ? JobManagerActor.Initialize)(Timeout(timeoutSecs.second)).onComplete {
->>>>>>> Part of an extensive update for this...
+      dao, resultActorRef
+    ))(Timeout(timeoutSecs.second)).onComplete {
       case Failure(e: Exception) =>
         logger.error("Exception after sending Initialize to JobManagerActor", e)
         // Make sure we try to shut down the context in case it gets created anyways
