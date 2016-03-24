@@ -17,10 +17,10 @@ trait JobSpecConfig {
   import collection.JavaConverters._
 
   val JobResultCacheSize = Integer.valueOf(30)
-  val NumCpuCores = Integer.valueOf(Runtime.getRuntime.availableProcessors())  // number of cores to allocate. Required.
-  val MemoryPerNode = "512m"  // Executor memory per node, -Xmx style eg 512m, 1G, etc.
+  val NumCpuCores = Integer.valueOf(Runtime.getRuntime.availableProcessors()) // number of cores to allocate. Required.
+  val MemoryPerNode = "512m" // Executor memory per node, -Xmx style eg 512m, 1G, etc.
   val MaxJobsPerContext = Integer.valueOf(2)
-  def contextFactory = classOf[DefaultSparkContextFactory].getName
+  def contextFactory: String = classOf[DefaultSparkContextFactory].getName
   lazy val config = {
     val ConfigMap = Map(
       "spark.jobserver.job-result-cache-size" -> JobResultCacheSize,
@@ -44,18 +44,18 @@ trait JobSpecConfig {
   lazy val contextConfig = {
     val ConfigMap = Map(
       "context-factory" -> contextFactory,
-      "streaming.batch_interval" -> new Integer(40),
-      "streaming.stopGracefully" -> false,
-      "streaming.stopSparkContext" -> true
+      "streaming.batch_interval" -> Integer.valueOf(40),
+      "streaming.stopGracefully" -> Boolean.box(false),
+      "streaming.stopSparkContext" -> Boolean.box(true)
     )
     ConfigFactory.parseMap(ConfigMap.asJava).withFallback(ConfigFactory.defaultOverrides())
   }
 
-  def getNewSystem = ActorSystem("test", config)
+  def getNewSystem: ActorSystem = ActorSystem("test", config)
 }
 
 abstract class JobSpecBaseBase(system: ActorSystem) extends TestKit(system) with ImplicitSender
-with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
+    with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   var dao: JobDAO = _
   var daoActor: ActorRef = _
   var manager: ActorRef = _

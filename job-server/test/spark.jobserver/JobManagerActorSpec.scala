@@ -30,18 +30,23 @@ class JobManagerActorSpec extends JobManagerSpec {
         errorEvents ++ syncEvents)
       val JobResult(_, sum2: Int) = expectMsgClass(classOf[JobResult])
 
-      sum2 should equal (sum)
+      sum2 should equal(sum)
     }
 
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     it ("jobs should be able to cache and retrieve RDDs by name") {
       manager ! JobManagerActor.Initialize(daoActor, None)
+=======
+    it("jobs should be able to cache and retrieve RDDs by name") {
+      manager ! JobManagerActor.Initialize
+>>>>>>> Part of an extensive update for this...
       expectMsgClass(classOf[JobManagerActor.Initialized])
 
       uploadTestJar()
       manager ! JobManagerActor.StartJob("demo", classPrefix + "CacheRddByNameJob", emptyConfig,
         errorEvents ++ syncEvents)
       expectMsgPF(1.second.dilated, "Expected a JobResult or JobErroredOut message!") {
-        case JobResult(_, sum: Int) => sum should equal (1 + 4 + 9 + 16 + 25)
+        case JobResult(_, sum: Int)                => sum should equal(1 + 4 + 9 + 16 + 25)
         case JobErroredOut(_, _, error: Throwable) => throw error
       }
     }

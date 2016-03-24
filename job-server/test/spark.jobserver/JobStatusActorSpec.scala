@@ -12,7 +12,7 @@ object JobStatusActorSpec {
 }
 
 class JobStatusActorSpec extends TestKit(JobStatusActorSpec.system) with ImplicitSender
-with FunSpecLike with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
+    with FunSpecLike with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
 
   import com.typesafe.config._
   import CommonMessages._
@@ -75,7 +75,7 @@ with FunSpecLike with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll 
 
       actor ! Unsubscribe(jobId, self)
       actor ! JobStarted(jobId, contextName, DateTime.now)
-      expectNoMsg()   // shouldn't get it again
+      expectNoMsg() // shouldn't get it again
 
       actor ! Unsubscribe(jobId, self)
       expectMsg(NoSuchJobId)

@@ -1,4 +1,5 @@
 import sbt._
+import scala.sys
 
 object Dependencies {
   val excludeCglib = ExclusionRule(organization = "org.sonatype.sisu.inject")
@@ -9,36 +10,58 @@ object Dependencies {
   val excludeAsm = ExclusionRule(organization = "asm")
   val excludeQQ = ExclusionRule(organization = "org.scalamacros")
 
-  lazy val typeSafeConfigDeps = "com.typesafe" % "config" % "1.2.1"
-  lazy val yammerDeps = "com.yammer.metrics" % "metrics-core" % "2.2.0"
+  lazy val typeSafeConfigDeps = "com.typesafe" % "config" % "1.3.0"
+  lazy val yammerDeps = "io.dropwizard.metrics" % "metrics-core" % "3.1.2"
+    //"com.yammer.metrics" % "metrics-core" % "2.2.0"
 
-  lazy val yodaDeps = Seq(
-    "org.joda" % "joda-convert" % "1.2",
-    "joda-time" % "joda-time" % "2.2"
+  lazy val jodaDeps = Seq(
+    "org.joda" % "joda-convert" % "1.8.1",
+    "joda-time" % "joda-time" % "2.9.2"
   )
 
   lazy val akkaDeps = Seq(
     // Akka is provided because Spark already includes it, and Spark's version is shaded so it's not safe
     // to use this one
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     "com.typesafe.akka" %% "akka-slf4j" % "2.3.4" % "provided",
     "com.typesafe.akka" %% "akka-cluster" % "2.3.4" exclude("com.typesafe.akka", "akka-remote"),
+=======
+    "com.typesafe.akka" %% "akka-slf4j" % "2.3.14" % "provided",
+>>>>>>> Part of an extensive update for this...
     "io.spray" %% "spray-json" % "1.3.2",
     "io.spray" %% "spray-can" % "1.3.3",
     "io.spray" %% "spray-caching" % "1.3.3",
     "io.spray" %% "spray-routing" % "1.3.3",
     "io.spray" %% "spray-client" % "1.3.3",
     yammerDeps
-  ) ++ yodaDeps
+  ) ++ jodaDeps
 
   val mesosVersion = sys.env.getOrElse("MESOS_VERSION", "0.25.0-0.2.70.ubuntu1404")
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
 
   val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "1.6.0")
+=======
+  val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "1.6.1")
+>>>>>>> Part of an extensive update for this...
   lazy val sparkDeps = Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
     // Force netty version.  This avoids some Spark netty dependency problem.
     "io.netty" % "netty-all" % "4.0.29.Final"
   )
 
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
+=======
+  lazy val scalaLib = Seq("org.scala-lang" % "scala-library" % "2.10.6")
+
+  /*
+  lazy val scalaLib = if (scala.util.Properties.versionString.split(" ")(1).startsWith("2.10")) {
+    Seq("org.scala-lang" % "scala-library" % "2.11.8")
+  }else{
+    Seq()
+  }
+  */
+
+>>>>>>> Part of an extensive update for this...
   lazy val sparkExtraDeps = Seq(
     "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
     "org.apache.spark" %% "spark-sql" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
@@ -48,9 +71,15 @@ object Dependencies {
 
   lazy val slickDeps = Seq(
     "com.typesafe.slick" %% "slick" % "2.1.0",
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     "com.h2database" % "h2" % "1.3.170",
     "commons-dbcp" % "commons-dbcp" % "1.4",
     "org.flywaydb" % "flyway-core" % "3.2.1"
+=======
+    "com.h2database" % "h2" % "1.3.176",
+    "commons-dbcp" % "commons-dbcp" % "1.4"
+    //"org.flywaydb" % "flyway-core" % "3.2.1"
+>>>>>>> Part of an extensive update for this...
   )
 
   lazy val logbackDeps = Seq(
@@ -58,16 +87,16 @@ object Dependencies {
   )
 
   lazy val coreTestDeps = Seq(
-    "org.scalatest" %% "scalatest" % "2.2.1" % "test",
-    "com.typesafe.akka" %% "akka-testkit" % "2.3.4" % "test",
-    "io.spray" %% "spray-testkit" % "1.3.2" % "test"
+    "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+    "com.typesafe.akka" %% "akka-testkit" % "2.3.14" % "test",
+    "io.spray" %% "spray-testkit" % "1.3.3" % "test"
   )
 
   lazy val securityDeps = Seq(
      "org.apache.shiro" % "shiro-core" % "1.2.4"
   )
 
-  lazy val serverDeps = apiDeps ++ yodaDeps
+  lazy val serverDeps = apiDeps ++ jodaDeps
   lazy val apiDeps = sparkDeps :+ typeSafeConfigDeps
 
   val repos = Seq(

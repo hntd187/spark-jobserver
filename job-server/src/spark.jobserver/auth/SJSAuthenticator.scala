@@ -10,7 +10,7 @@ import spray.routing.authentication._
 import spray.routing.directives.AuthMagnet
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.{Await, ExecutionContext, Future}
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 import org.apache.shiro.SecurityUtils
@@ -27,7 +27,7 @@ trait SJSAuthenticator {
 
   import scala.concurrent.duration._
 
-  def asShiroAuthenticator(authTimeout : Int)(implicit ec: ExecutionContext): AuthMagnet[AuthInfo] = {
+  def asShiroAuthenticator(authTimeout: Int)(implicit ec: ExecutionContext): AuthMagnet[AuthInfo] = {
     val logger = LoggerFactory.getLogger(getClass)
 
     def validate(userPass: Option[UserPass]): Future[Option[AuthInfo]] = {
@@ -44,7 +44,7 @@ trait SJSAuthenticator {
     BasicAuth(authenticator _, realm = "Shiro Private")
   }
 
- /**
+  /**
    * do not call directly - only for unit testing!
    */
   def explicitValidation(userPass: UserPass, logger: Logger): Option[AuthInfo] = {
@@ -99,5 +99,4 @@ trait SJSAuthenticator {
     BasicAuth(authenticator _, realm = "Private API")
   }
 }
-
 

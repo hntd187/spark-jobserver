@@ -1,25 +1,29 @@
 package ooyala.common.akka.metrics
 
-import com.yammer.metrics.Metrics
-import com.yammer.metrics.core.{Histogram, Meter, Gauge, Timer}
-import java.util.concurrent.TimeUnit
+import com.codahale.metrics._
 
 /**
  * Utility trait to make metrics creation slightly less verbose
  */
+
+object YammerMetrics {
+
+  val metrics = new MetricRegistry()
+}
+
 trait YammerMetrics {
-  def meter(name: String, eventType: String): Meter =
-    Metrics.newMeter(getClass, name, eventType, TimeUnit.SECONDS)
 
-  def gauge[T](name: String, metric: => T, scope: String = null): Gauge[T] =
-    Metrics.newGauge(getClass, name, scope, new Gauge[T] {
-      override def value(): T = metric
+  def meter(name: String): Meter = YammerMetrics.metrics.meter(MetricRegistry.name(getClass, name))
+
+  def gauge[T](name: String, metric: => T): Gauge[T] = {
+    YammerMetrics.metrics.register(MetricRegistry.name(getClass, name), new Gauge[T]() {
+      override def getValue: T = metric
     })
+  }
 
-  def histogram(name: String): Histogram = Metrics.newHistogram(getClass, name, true)
+  def histogram(name: String): Histogram = YammerMetrics.metrics.histogram(MetricRegistry.name(getClass, name))
 
-  def timer(name: String,
-            durationUnit: TimeUnit = TimeUnit.NANOSECONDS,
-            rateUnit: TimeUnit = TimeUnit.SECONDS): Timer =
-    Metrics.newTimer(getClass, name, durationUnit, rateUnit)
+  def timer(name: String): Timer = {
+    YammerMetrics.metrics.timer(MetricRegistry.name(getClass, name))
+  }
 }

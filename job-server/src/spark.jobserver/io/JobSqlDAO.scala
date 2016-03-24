@@ -1,25 +1,29 @@
 package spark.jobserver.io
 
-import com.typesafe.config.{ConfigRenderOptions, Config, ConfigFactory}
-import java.io.{FileOutputStream, BufferedOutputStream, File}
+import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
+import java.io.{BufferedOutputStream, File, FileOutputStream}
 import java.sql.Timestamp
 import javax.sql.DataSource
+
 import org.flywaydb.core.Flyway
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
 import scala.slick.driver.JdbcProfile
 import scala.reflect.runtime.universe
 import org.apache.commons.dbcp.BasicDataSource
+
+import scala.slick.direct.AnnotationMapper.column
 
 class JobSqlDAO(config: Config) extends JobDAO {
   val slickDriverClass = config.getString("spark.jobserver.sqldao.slick-driver")
   val jdbcDriverClass = config.getString("spark.jobserver.sqldao.jdbc-driver")
 
-  val runtimeMirror = universe.runtimeMirror(getClass.getClassLoader)
-  val profileModule = runtimeMirror.staticModule(slickDriverClass)
-  val profile = runtimeMirror.reflectModule(profileModule).instance.asInstanceOf[JdbcProfile]
-  import profile.simple._
+  val rtmirror = runtimeMirror(getClass.getClassLoader)
+  val profileModule = rtmirror.staticModule(slickDriverClass)
+  val profile = rtmirror.reflectModule(profileModule).instance.asInstanceOf[JdbcProfile]
 
+  import profile.simple._
   private val logger = LoggerFactory.getLogger(getClass)
 
   // NOTE: below is only needed for H2 drivers
@@ -41,8 +45,7 @@ class JobSqlDAO(config: Config) extends JobDAO {
 
   // Explicitly avoiding to label 'jarId' as a foreign key to avoid dealing with
   // referential integrity constraint violations.
-  class Jobs(tag: Tag) extends Table[(String, String, Int, String, Timestamp,
-                                      Option[Timestamp], Option[String])] (tag, "JOBS") {
+  class Jobs(tag: Tag) extends Table[(String, String, Int, String, Timestamp, Option[Timestamp], Option[String])](tag, "JOBS") {
     def jobId = column[String]("JOB_ID", O.PrimaryKey)
     def contextName = column[String]("CONTEXT_NAME")
     def jarId = column[Int]("JAR_ID") // FK to JARS table
@@ -102,7 +105,6 @@ class JobSqlDAO(config: Config) extends JobDAO {
     flyway.setLocations(migrateLocations)
     flyway.migrate()
   }
-
   override def saveJar(appName: String, uploadTime: DateTime, jarBytes: Array[Byte]) {
     // The order is important. Save the jar file first and then log it into database.
     cacheJar(appName, uploadTime, jarBytes)
@@ -115,10 +117,10 @@ class JobSqlDAO(config: Config) extends JobDAO {
     db withSession {
       implicit session =>
 
-      // It's "select appName, max(uploadTime) from jars group by appName
-      // max(uploadTime) is the latest upload time of the jar.
+        // It's "select appName, max(uploadTime) from jars group by appName
+        // max(uploadTime) is the latest upload time of the jar.
         val query = jars.groupBy { _.appName }.map {
-          case (appName, jar) => (appName -> jar.map(_.uploadTime).max.get)
+          case (appName, jar) => appName -> jar.map(_.uploadTime).max.get
         }
 
         query.list.map {
@@ -164,7 +166,7 @@ class JobSqlDAO(config: Config) extends JobDAO {
         val dateTime = convertDateJodaToSql(uploadTime)
         val query = jars.filter { jar =>
           jar.appName === appName && jar.uploadTime === dateTime
-        }.map( _.jar )
+        }.map(_.jar)
 
         // TODO: check if this list is empty?
         query.list.head
@@ -185,7 +187,7 @@ class JobSqlDAO(config: Config) extends JobDAO {
     val dateTime = convertDateJodaToSql(uploadTime)
     val query = jars.filter { jar =>
       jar.appName === appName && jar.uploadTime === dateTime
-    }.map( _.jarId )
+    }.map(_.jarId)
 
     query.list.head
   }
@@ -195,7 +197,7 @@ class JobSqlDAO(config: Config) extends JobDAO {
     val outFile = new File(rootDir, createJarName(appName, uploadTime) + ".jar")
     val bos = new BufferedOutputStream(new FileOutputStream(outFile))
     try {
-      logger.debug("Writing {} bytes to file {}", jarBytes.size, outFile.getPath)
+      logger.debug("Writing {} bytes to file {}", jarBytes.length, outFile.getPath)
       bos.write(jarBytes)
       bos.flush()
     } finally {
@@ -206,19 +208,17 @@ class JobSqlDAO(config: Config) extends JobDAO {
   private def createJarName(appName: String, uploadTime: DateTime): String = appName + "-" + uploadTime
 
   // Convert from joda DateTime to java.sql.Timestamp
-  private def convertDateJodaToSql(dateTime: DateTime): Timestamp =
-    new Timestamp(dateTime.getMillis())
+  private def convertDateJodaToSql(dateTime: DateTime): Timestamp = new Timestamp(dateTime.getMillis)
 
   // Convert from java.sql.Timestamp to joda DateTime
-  private def convertDateSqlToJoda(timestamp: Timestamp): DateTime =
-    new DateTime(timestamp.getTime())
+  private def convertDateSqlToJoda(timestamp: Timestamp): DateTime = new DateTime(timestamp.getTime)
 
   override def getJobConfigs: Map[String, Config] = {
     db withSession {
       implicit sessions =>
 
-        configs.list.map { case (jobId, jobConfig) =>
-          (jobId -> ConfigFactory.parseString(jobConfig))
+        configs.list.map {
+          case (jobId, jobConfig) => jobId -> ConfigFactory.parseString(jobConfig)
         }.toMap
     }
   }
@@ -240,9 +240,11 @@ class JobSqlDAO(config: Config) extends JobDAO {
 
         // Extract out the the JobInfo members and convert any members to appropriate SQL types
         val JobInfo(jobId, contextName, _, classPath, startTime, endTime, error) = jobInfo
-        val (start, endOpt, errOpt) = (convertDateJodaToSql(startTime),
+        val (start, endOpt, errOpt) = (
+          convertDateJodaToSql(startTime),
           endTime.map(convertDateJodaToSql(_)),
-          error.map(_.getMessage))
+          error.map(_.getMessage)
+        )
 
         // When you run a job asynchronously, the same data is written twice with a different
         // endTime and error value. When the row does not exists we write the data as new, otherwise,
@@ -264,21 +266,22 @@ class JobSqlDAO(config: Config) extends JobDAO {
         val joinQuery = for {
           jar <- jars
           j <- jobs if j.jarId === jar.jarId
-        } yield
-          (j.jobId, j.contextName, jar.appName, jar.uploadTime, j.classPath, j.startTime, j.endTime, j.error)
+        } yield (j.jobId, j.contextName, jar.appName, jar.uploadTime, j.classPath, j.startTime, j.endTime, j.error)
         val sortQuery = joinQuery.sortBy(_._6.desc)
         val limitQuery = sortQuery.take(limit)
         // Transform the each row of the table into a map of JobInfo values
         limitQuery.list.map {
           case (id, context, app, upload, classpath, start, end, err) =>
-            JobInfo(id,
+            JobInfo(
+              id,
               context,
               JarInfo(app, convertDateSqlToJoda(upload)),
               classpath,
               convertDateSqlToJoda(start),
               end.map(convertDateSqlToJoda(_)),
-              err.map(new Throwable(_)))
-        }.toSeq
+              err.map(new Throwable(_))
+            )
+        }
     }
   }
 
@@ -290,17 +293,19 @@ class JobSqlDAO(config: Config) extends JobDAO {
         val joinQuery = for {
           jar <- jars
           j <- jobs if j.jarId === jar.jarId && j.jobId === jobId
-        } yield
-          (j.jobId, j.contextName, jar.appName, jar.uploadTime, j.classPath, j.startTime,
-            j.endTime, j.error)
-        joinQuery.list.map { case (id, context, app, upload, classpath, start, end, err) =>
-          JobInfo(id,
-            context,
-            JarInfo(app, convertDateSqlToJoda(upload)),
-            classpath,
-            convertDateSqlToJoda(start),
-            end.map(convertDateSqlToJoda(_)),
-            err.map(new Throwable(_)))
+        } yield (j.jobId, j.contextName, jar.appName, jar.uploadTime, j.classPath, j.startTime,
+          j.endTime, j.error)
+        joinQuery.list.map {
+          case (id, context, app, upload, classpath, start, end, err) =>
+            JobInfo(
+              id,
+              context,
+              JarInfo(app, convertDateSqlToJoda(upload)),
+              classpath,
+              convertDateSqlToJoda(start),
+              end.map(convertDateSqlToJoda(_)),
+              err.map(new Throwable(_))
+            )
         }.headOption
     }
   }

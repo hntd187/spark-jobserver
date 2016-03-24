@@ -8,6 +8,7 @@ import org.joda.time.DateTime
 import scala.concurrent.Await
 import spark.jobserver._
 import spark.jobserver.io.JobFileDAO
+import scala.sys
 
 /**
  * A stress test for launching many jobs within a job context

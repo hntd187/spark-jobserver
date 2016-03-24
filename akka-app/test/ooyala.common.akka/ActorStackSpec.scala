@@ -6,7 +6,6 @@ import akka.testkit.TestActorRef
 
 import akka.actor.{Actor, ActorSystem}
 
-
 class DummyActor extends ActorStack {
   var str = ""
   def wrappedReceive = {
@@ -32,7 +31,7 @@ class ActorStackSpec extends FunSpec with Matchers {
       val actor = actorRef.underlyingActor
 
       actorRef ! "me"
-      actor.str should equal ("pre me")
+      actor.str should equal("pre me")
     }
 
     it("should pass messages not handled in wrappedReceive to unhandled function") {
@@ -40,7 +39,7 @@ class ActorStackSpec extends FunSpec with Matchers {
       val actor = actorRef.underlyingActor
 
       actorRef ! List(1, 2)
-      actor.str should equal ("unhandled")
+      actor.str should equal("unhandled")
     }
   }
 }

@@ -12,7 +12,6 @@ import com.yammer.metrics.core.Gauge
 class CommonRoutesSpec extends FunSpec with Matchers with ScalatestRouteTest with CommonRoutes {
   def actorRefFactory = system
 
-
   val metricCounter = Metrics.newCounter(getClass, "test-counter")
   val metricMeter = Metrics.newMeter(getClass, "test-meter", "requests", TimeUnit.SECONDS)
   val metricHistogram = Metrics.newHistogram(getClass, "test-hist")
@@ -39,11 +38,11 @@ class CommonRoutesSpec extends FunSpec with Matchers with ScalatestRouteTest wit
         val metricsMap = JsonUtils.mapFromJson(responseAs[String])
         val classMetrics = metricsMap(getClass.getName).asInstanceOf[Map[String, Any]]
 
-        classMetrics.keys.toSet should equal (Set("test-counter", "test-meter", "test-hist", "test-timer", "test-gauge"))
-        classMetrics("test-counter") should equal (counterMap)
-        classMetrics("test-meter") should equal (meterMap)
-        classMetrics("test-hist") should equal (histMap)
-        classMetrics("test-timer") should equal (timerMap)
+        classMetrics.keys.toSet should equal(Set("test-counter", "test-meter", "test-hist", "test-timer", "test-gauge"))
+        classMetrics("test-counter") should equal(counterMap)
+        classMetrics("test-meter") should equal(meterMap)
+        classMetrics("test-hist") should equal(histMap)
+        classMetrics("test-timer") should equal(timerMap)
       }
     }
   }

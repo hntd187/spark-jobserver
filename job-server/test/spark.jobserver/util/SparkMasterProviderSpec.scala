@@ -8,7 +8,6 @@ class SparkMasterProviderSpec extends FunSpec with Matchers {
 
   import collection.JavaConverters._
 
-
   val contextName = "demo"
 
   def getSparkConf(baseConfig: Config): SparkConf =

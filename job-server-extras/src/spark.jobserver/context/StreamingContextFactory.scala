@@ -9,7 +9,7 @@ class StreamingContextFactory extends SparkContextFactory {
 
   type C = StreamingContext with ContextLike
 
-  def makeContext(sparkConf: SparkConf, config: Config,  contextName: String): C = {
+  def makeContext(sparkConf: SparkConf, config: Config, contextName: String): C = {
     val interval = config.getInt("streaming.batch_interval")
     val stopGracefully = config.getBoolean("streaming.stopGracefully")
     val stopSparkContext = config.getBoolean("streaming.stopSparkContext")

@@ -1,6 +1,6 @@
 package spark.jobserver.auth
 
-import org.scalatest.{ FunSpecLike, FunSpec, BeforeAndAfter, BeforeAndAfterAll, Matchers }
+import org.scalatest.{FunSpecLike, FunSpec, BeforeAndAfter, BeforeAndAfterAll, Matchers}
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.apache.shiro.mgt.DefaultSecurityManager
 import org.apache.shiro.mgt.SecurityManager
@@ -11,16 +11,16 @@ import spark.jobserver.auth._
 import spray.routing.authentication.UserPass
 
 import spray.routing.directives.AuthMagnet
-import spray.routing.{ HttpService, Route, RequestContext }
+import spray.routing.{HttpService, Route, RequestContext}
 import spray.http.StatusCodes
 import spray.testkit.ScalatestRouteTest
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.{Await, ExecutionContext, Future}
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeoutException
 
 object SJSAuthenticatorSpec {
-    //edit this with your real LDAP server information, just remember not to 
+  //edit this with your real LDAP server information, just remember not to 
   // check it in....
   val LdapIniConfig = """
 # use this for basic ldap authorization, without group checking
@@ -74,7 +74,6 @@ class SJSAuthenticatorSpec extends HttpService with SJSAuthenticator with FunSpe
 
   def actorRefFactory = system
 
-
   //set this to true to check your real ldap server
   val isGroupChecking = false
   val ini = {
@@ -118,7 +117,7 @@ class SJSAuthenticatorSpec extends HttpService with SJSAuthenticator with FunSpe
 
   val testUserInvalid = "no-user"
   val testUserInvalidPassword = "pw"
-  
+
   describe("SJSAuthenticator") {
     it("should allow user with valid role/group") {
       explicitValidation(new UserPass(testUserWithValidGroup, testUserWithValidGroupPassword), logger) should equal(Some(new AuthInfo(User(testUserWithValidGroup))))

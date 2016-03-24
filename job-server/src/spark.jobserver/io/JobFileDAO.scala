@@ -129,7 +129,7 @@ class JobFileDAO(config: Config) extends JobDAO {
   def getApps: Map[String, DateTime] = apps.map {
     case (appName, uploadTimes) =>
       appName -> uploadTimes.head
-    }.toMap
+  }.toMap
 
   override def retrieveJarFile(appName: String, uploadTime: DateTime): String =
     new File(rootDir, createJarName(appName, uploadTime) + ".jar").getAbsolutePath
@@ -166,12 +166,13 @@ class JobFileDAO(config: Config) extends JobDAO {
     in.readUTF,
     new DateTime(in.readLong),
     Some(new DateTime(in.readLong)),
-    readError(in))
+    readError(in)
+  )
 
   override def getJobInfo(jobId: String): Option[JobInfo] = jobs.get(jobId)
 
   override def getJobInfos(limit: Int): Seq[JobInfo] =
-    jobs.values.toSeq.sortBy(- _.startTime.getMillis).take(limit)
+    jobs.values.toSeq.sortBy(-_.startTime.getMillis).take(limit)
 
   override def saveJobConfig(jobId: String, jobConfig: Config) {
     writeJobConfig(jobConfigsOutputStream, jobId, jobConfig)

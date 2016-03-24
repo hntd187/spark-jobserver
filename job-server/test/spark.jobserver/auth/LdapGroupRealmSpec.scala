@@ -1,6 +1,6 @@
 package spark.jobserver.auth
 
-import org.scalatest.{ FunSpecLike, FunSpec, BeforeAndAfter, BeforeAndAfterAll, Matchers }
+import org.scalatest.{FunSpecLike, FunSpec, BeforeAndAfter, BeforeAndAfterAll, Matchers}
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.apache.shiro.mgt.DefaultSecurityManager
 import org.apache.shiro.mgt.SecurityManager
@@ -176,9 +176,11 @@ class TestLdapContext extends LdapContext {
 
   def search(searchBase: String, searchFilter: String, searchAtts: Array[Object], searchCtls: SearchControls): NamingEnumeration[SearchResult] = {
     if (searchFilter == LdapGroupRealm.groupMemberFilter) {
-      new TestNamingEnumeration(List(new SearchResult("cn=group1,ou=groups", null, new BasicAttributes("member", "cn=userInGroup1,ou=people,dc=xxx,dc=org")),
+      new TestNamingEnumeration(List(
+        new SearchResult("cn=group1,ou=groups", null, new BasicAttributes("member", "cn=userInGroup1,ou=people,dc=xxx,dc=org")),
         new SearchResult("cn=group2,ou=groups", null, new BasicAttributes("member", "cn=userInGroup2,ou=people,dc=xxx,dc=org")),
-        new SearchResult("cn=groupXX,ou=groups", null, new BasicAttributes("member", "cn=userInGroupXX,ou=people,dc=xxx,dc=org"))))
+        new SearchResult("cn=groupXX,ou=groups", null, new BasicAttributes("member", "cn=userInGroupXX,ou=people,dc=xxx,dc=org"))
+      ))
     } else {
       new TestNamingEnumeration(List(new SearchResult("cn=%s,ou=people" format searchAtts(0), null, new BasicAttributes("k", "v"))))
     }

@@ -11,7 +11,6 @@ import scala.collection.mutable
 object StreamingTestJob extends SparkStreamingJob {
   def validate(ssc: StreamingContext, config: Config): SparkJobValidation = SparkJobValid
 
-
   def runJob(ssc: StreamingContext, config: Config): Any = {
     val queue = mutable.Queue[RDD[String]]()
     queue += ssc.sparkContext.makeRDD(Seq("123", "test", "test2"))

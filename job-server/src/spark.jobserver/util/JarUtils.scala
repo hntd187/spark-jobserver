@@ -3,7 +3,7 @@ package spark.jobserver.util
 import java.io.File
 import java.lang.ClassLoader
 import java.lang.reflect.Constructor
-import java.net.{ URL, URLClassLoader }
+import java.net.{URL, URLClassLoader}
 import org.slf4j.LoggerFactory
 
 /**
@@ -38,9 +38,9 @@ object JarUtils {
       () => objectRef
     } catch {
       case e: java.lang.ClassNotFoundException => fallBackToClass()
-      case e: java.lang.ClassCastException => fallBackToClass()
-      case e: java.lang.NoSuchMethodException => fallBackToClass()
-      case e: java.lang.NoSuchFieldException => fallBackToClass()
+      case e: java.lang.ClassCastException     => fallBackToClass()
+      case e: java.lang.NoSuchMethodException  => fallBackToClass()
+      case e: java.lang.NoSuchFieldException   => fallBackToClass()
     }
   }
 

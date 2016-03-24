@@ -6,7 +6,6 @@ import akka.testkit.TestActorRef
 
 import akka.actor.{Actor, ActorSystem}
 
-
 class ActorMetricsSpec extends FunSpec with Matchers {
   implicit val system = ActorSystem("test")
 
@@ -16,7 +15,7 @@ class ActorMetricsSpec extends FunSpec with Matchers {
       val actor = actorRef.underlyingActor
 
       actorRef ! "me"
-      actor.metricReceiveTimer.count should equal (1)
+      actor.metricReceiveTimer.count should equal(1)
     }
   }
 }

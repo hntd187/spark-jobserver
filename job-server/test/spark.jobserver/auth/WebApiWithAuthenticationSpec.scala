@@ -1,15 +1,15 @@
 package spark.jobserver.auth
 
-import akka.actor.{ Actor, Props }
-import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
+import akka.actor.{Actor, Props}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import spark.jobserver._
-import spark.jobserver.io.{ JobInfo, JarInfo }
+import spark.jobserver.io.{JobInfo, JarInfo}
 import org.joda.time.DateTime
-import org.scalatest.{ Matchers, FunSpec, BeforeAndAfterAll }
+import org.scalatest.{Matchers, FunSpec, BeforeAndAfterAll}
 import spray.http.StatusCodes._
 import spray.http.HttpHeaders.Authorization
 import spray.http.BasicHttpCredentials
-import spray.routing.{ HttpService, Route }
+import spray.routing.{HttpService, Route}
 import spray.testkit.ScalatestRouteTest
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.apache.shiro.mgt.DefaultSecurityManager

@@ -94,8 +94,13 @@ abstract class JobManagerSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
 
       uploadTestJar()
       manager ! JobManagerActor.StartJob("demo", wordCountClass, stringConfig, syncEvents ++ errorEvents)
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
       expectMsgPF(startJobWait, "Did not get JobResult") {
         case JobResult(_, result: Map[String, Int]) => println("I got results! " + result)
+=======
+      expectMsgPF(3.seconds.dilated, "Did not get JobResult") {
+        case JobResult(_, result: Map[String, Int]) => Unit
+>>>>>>> Part of an extensive update for this...
       }
       expectNoMsg()
     }
@@ -116,8 +121,13 @@ abstract class JobManagerSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
 
       uploadTestJar()
       manager ! JobManagerActor.StartJob("demo", classPrefix + "MyErrorJob", emptyConfig, errorEvents)
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
       val errorMsg = expectMsgClass(startJobWait, classOf[JobErroredOut])
       errorMsg.err.getClass should equal (classOf[IllegalArgumentException])
+=======
+      val errorMsg = expectMsgClass(classOf[JobErroredOut])
+      errorMsg.err.getClass should equal(classOf[IllegalArgumentException])
+>>>>>>> Part of an extensive update for this...
     }
 
     it("job should get jobConfig passed in to StartJob message") {
@@ -130,7 +140,7 @@ abstract class JobManagerSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
         syncEvents ++ errorEvents)
       expectMsgPF(startJobWait, "Did not get JobResult") {
         case JobResult(_, keys: Seq[String]) =>
-          keys should contain ("foo")
+          keys should contain("foo")
       }
     }
 
@@ -143,13 +153,13 @@ abstract class JobManagerSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
         syncEvents ++ errorEvents)
       expectMsgPF(5.seconds.dilated, "Did not get JobResult") {
         case JobResult(_, result: Array[Product]) =>
-          result.length should equal (1)
-          result(0).getClass.getName should include ("Animal")
+          result.length should equal(1)
+          result(0).getClass.getName should include("Animal")
       }
       expectNoMsg()
     }
 
-    it ("should refuse to start a job when too many jobs in the context are running") {
+    it("should refuse to start a job when too many jobs in the context are running") {
       val jobSleepTimeMillis = 2000L
       val jobConfig = ConfigFactory.parseString("sleep.time.millis = " + jobSleepTimeMillis)
 
@@ -169,19 +179,21 @@ abstract class JobManagerSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
           case started: JobStarted =>
             messageCounts(started.getClass) += 1
           case noSlots: NoJobSlotsAvailable =>
-            noSlots.maxJobSlots should equal (MaxJobsPerContext)
+            noSlots.maxJobSlots should equal(MaxJobsPerContext)
             messageCounts(noSlots.getClass) += 1
           case finished: JobFinished =>
             messageCounts(finished.getClass) += 1
           case result: JobResult =>
-            result.result should equal (jobSleepTimeMillis)
+            result.result should equal(jobSleepTimeMillis)
             messageCounts(result.getClass) += 1
         }
       }
-      messageCounts.toMap should equal (Map(classOf[JobStarted] -> MaxJobsPerContext,
+      messageCounts.toMap should equal(Map(
+        classOf[JobStarted] -> MaxJobsPerContext,
         classOf[JobFinished] -> MaxJobsPerContext,
         classOf[JobResult] -> MaxJobsPerContext,
-        classOf[NoJobSlotsAvailable] -> 1))
+        classOf[NoJobSlotsAvailable] -> 1
+      ))
     }
 
     it("should start a job that's an object rather than class") {
@@ -191,8 +203,13 @@ abstract class JobManagerSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
       uploadTestJar()
       manager ! JobManagerActor.StartJob("demo", classPrefix + "SimpleObjectJob", emptyConfig,
         syncEvents ++ errorEvents)
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
       expectMsgPF(5.seconds.dilated, "Did not get JobResult") {
         case JobResult(_, result: Int) => result should equal (1 + 2 + 3)
+=======
+      expectMsgPF(3.seconds.dilated, "Did not get JobResult") {
+        case JobResult(_, result: Int) => result should equal(1 + 2 + 3)
+>>>>>>> Part of an extensive update for this...
       }
     }
 

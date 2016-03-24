@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
  * NOTE: This is copied from Spark's ExecutorURLClassLoader, which is private[spark].
  */
 class ContextURLClassLoader(urls: Array[URL], parent: ClassLoader)
-  extends URLClassLoader(urls, parent) {
+    extends URLClassLoader(urls, parent) {
 
   val logger = LoggerFactory.getLogger(getClass)
 

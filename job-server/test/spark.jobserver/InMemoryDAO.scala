@@ -19,8 +19,9 @@ class InMemoryDAO extends JobDAO {
   def getApps(): Map[String, DateTime] = {
     jars.keys
       .groupBy(_._1)
-      .map { case (appName, appUploadTimeTuples) =>
-        appName -> appUploadTimeTuples.map(_._2).toSeq.head
+      .map {
+        case (appName, appUploadTimeTuples) =>
+          appName -> appUploadTimeTuples.map(_._2).toSeq.head
       }.toMap
   }
 

@@ -11,7 +11,7 @@ object JobInfoActorSpec {
 }
 
 class JobInfoActorSpec extends TestKit(JobInfoActorSpec.system) with ImplicitSender
-with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
+    with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
 
   import com.typesafe.config._
   import CommonMessages.NoSuchJobId
@@ -43,7 +43,7 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
     it("should store a job configuration") {
       actor ! StoreJobConfig(jobId, jobConfig)
       expectMsg(JobConfigStored)
-      dao.getJobConfigs.get(jobId) should be (Some(jobConfig))
+      dao.getJobConfigs.get(jobId) should be(Some(jobConfig))
     }
 
     it("should return a job configuration when the jobId exists") {

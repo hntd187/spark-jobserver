@@ -1,8 +1,8 @@
 package spark.jobserver
 
-import akka.actor.{ Props, ActorRef, ActorSystem }
-import akka.testkit.{ TestKit, ImplicitSender }
-import org.scalatest.{ FunSpecLike, BeforeAndAfter, BeforeAndAfterAll, Matchers }
+import akka.actor.{Props, ActorRef, ActorSystem}
+import akka.testkit.{TestKit, ImplicitSender}
+import org.scalatest.{FunSpecLike, BeforeAndAfter, BeforeAndAfterAll, Matchers}
 import java.nio.file.Files
 
 import spark.jobserver.io.DataFileDAO

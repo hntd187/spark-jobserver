@@ -4,7 +4,6 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import spray.revolver.RevolverPlugin._
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
-import bintray.Plugin.bintrayPublishSettings
 
 // There are advantages to using real Scala build files with SBT:
 //  - Multi-JVM testing won't work without it, for now
@@ -56,7 +55,7 @@ object JobServerBuild extends Build {
 
   lazy val jobServerTestJar = Project(id = "job-server-tests", base = file("job-server-tests"),
                                       settings = commonSettings ++ jobServerTestJarSettings
-                                     ) dependsOn(jobServerApi)
+                                     ) dependsOn jobServerApi
 
   lazy val jobServerApi = Project(id = "job-server-api",
                                   base = file("job-server-api"),
@@ -73,7 +72,7 @@ object JobServerBuild extends Build {
   //
   // NOTE: if we don't define a root project, SBT does it for us, but without our settings
   lazy val root = Project(id = "root", base = file("."),
-                    settings = commonSettings ++ ourReleaseSettings ++ rootSettings ++ dockerSettings
+                    settings = commonSettings ++ ourReleaseSettings ++ rootSettings
                   ).aggregate(jobServer, jobServerApi, jobServerTestJar, akkaApp, jobServerExtras).
                    dependsOn(jobServer, jobServerExtras)
 
@@ -96,6 +95,7 @@ object JobServerBuild extends Build {
     exportJars := true        // use the jar instead of target/classes
   )
 
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
   import sbtdocker.DockerKeys._
 
   lazy val dockerSettings = Seq(
@@ -144,12 +144,14 @@ object JobServerBuild extends Build {
     )
   )
 
+=======
+>>>>>>> Part of an extensive update for this...
   lazy val rootSettings = Seq(
     // Must run Spark tests sequentially because they compete for port 4040!
     parallelExecution in Test := false,
     publishArtifact := false,
     concurrentRestrictions := Seq(
-      Tags.limit(Tags.CPU, java.lang.Runtime.getRuntime().availableProcessors()),
+      Tags.limit(Tags.CPU, java.lang.Runtime.getRuntime.availableProcessors()),
       // limit to 1 concurrent test task, even across sub-projects
       // Note: some components of tests seem to have the "Untagged" tag rather than "Test" tag.
       // So, we limit the sum of "Test", "Untagged" tags to 1 concurrent
@@ -175,11 +177,16 @@ object JobServerBuild extends Build {
   // Create a default Scala style task to run with compiles
   lazy val runScalaStyle = taskKey[Unit]("testScalaStyle")
 
-  lazy val commonSettings = Defaults.defaultSettings ++ dirSettings ++ implicitlySettings ++ Seq(
+  lazy val commonSettings = Defaults.coreDefaultSettings ++ dirSettings ++ implicitlySettings ++ Seq(
     organization := "spark.jobserver",
     crossPaths   := true,
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     crossScalaVersions := Seq("2.10.5","2.11.6"),
     scalaVersion := "2.10.5",
+=======
+    crossScalaVersions := Seq("2.10.6","2.11.8"),
+    scalaVersion := "2.10.6",
+>>>>>>> Part of an extensive update for this...
     publishTo    := Some(Resolver.file("Unused repo", file("target/unusedrepo"))),
 
     // scalastyleFailOnError := true,
@@ -203,17 +210,10 @@ object JobServerBuild extends Build {
         <exclude module="jmxtools"/>
         <exclude module="jmxri"/>
       </dependencies>
-  ) ++ scalariformPrefs ++ scoverageSettings
+  ) ++ scalariformPrefs
 
-  lazy val scoverageSettings = {
-    import scoverage.ScoverageSbtPlugin
-    // Semicolon-separated list of regexs matching classes to exclude
-    ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := ".+Benchmark.*"
-  }
-
-  lazy val publishSettings = bintrayPublishSettings ++ Seq(
-    licenses += ("Apache-2.0", url("http://choosealicense.com/licenses/apache/")),
-    bintray.Keys.bintrayOrganization in bintray.Keys.bintray := Some("spark-jobserver")
+  lazy val publishSettings = Seq(
+    licenses += ("Apache-2.0", url("http://choosealicense.com/licenses/apache/"))
   )
 
   // change to scalariformSettings for auto format on compile; defaultScalariformSettings to disable
@@ -223,7 +223,6 @@ object JobServerBuild extends Build {
       .setPreference(AlignParameters, true)
       .setPreference(AlignSingleLineCaseStatements, true)
       .setPreference(DoubleIndentClassDeclaration, true)
-      .setPreference(PreserveDanglingCloseParenthesis, false)
   )
 
   // This is here so we can easily switch back to Logback when Spark fixes its log4j dependency.

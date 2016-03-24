@@ -6,8 +6,13 @@ object Assembly {
   lazy val settings = Seq(
     assemblyJarName in assembly := "spark-job-server.jar",
     // uncomment below to exclude tests
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     // test in assembly := {},
     assemblyExcludedJars in assembly <<= (fullClasspath in assembly) map { _ filter { cp =>
+=======
+    test in assembly := {},
+    excludedJars in assembly <<= (fullClasspath in assembly) map { _ filter { cp =>
+>>>>>>> Part of an extensive update for this...
       List("servlet-api", "guice-all", "junit", "uuid",
         "jetty", "jsp-api-2.0", "antlr", "avro", "slf4j-log4j", "log4j-1.2",
         "scala-actors", "spark", "commons-cli", "stax-api", "mockito").exists(cp.data.getName.startsWith(_))

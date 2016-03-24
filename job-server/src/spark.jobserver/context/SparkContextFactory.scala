@@ -23,7 +23,7 @@ trait SparkContextFactory {
    * @param contextName the name of the context to start
    * @return the newly created context.
    */
-  def makeContext(sparkConf: SparkConf, config: Config,  contextName: String): C
+  def makeContext(sparkConf: SparkConf, config: Config, contextName: String): C
 
   /**
    * Creates a SparkContext or derived context.
@@ -49,7 +49,7 @@ class DefaultSparkContextFactory extends SparkContextFactory {
 
   type C = SparkContext with ContextLike
 
-  def makeContext(sparkConf: SparkConf, config: Config,  contextName: String): C = {
+  def makeContext(sparkConf: SparkConf, config: Config, contextName: String): C = {
     new SparkContext(sparkConf) with ContextLike {
       def sparkContext: SparkContext = this
       def isValidJob(job: SparkJobBase): Boolean = job.isInstanceOf[SparkJob]

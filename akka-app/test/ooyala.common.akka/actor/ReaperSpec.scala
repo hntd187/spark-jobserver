@@ -1,6 +1,5 @@
 package ooyala.common.akka.actor
 
-
 import akka.actor.{ActorSystem, Props, ActorRef}
 import akka.testkit.{TestKit, ImplicitSender, TestProbe}
 import org.scalatest.{MustMatchers, FunSpecLike, BeforeAndAfterAll}

@@ -17,9 +17,10 @@ case class StoreJar(appName: String, jarBytes: Array[Byte])
 /** Message requesting a listing of the available JARs */
 case object ListJars
 
-/** Message for storing one or more local JARs based on the given map.
-  * @param  localJars    Map where the key is the appName and the value is the local path to the JAR.
-  */
+/**
+ * Message for storing one or more local JARs based on the given map.
+ * @param  localJars    Map where the key is the appName and the value is the local path to the JAR.
+ */
 case class StoreLocalJars(localJars: Map[String, String])
 
 // Responses
@@ -63,8 +64,8 @@ class JarManager(jobDao: ActorRef) extends InstrumentedActor {
               }
             } catch {
               case e: Exception =>
-                  logger.error(e.getMessage)
-                  false
+                logger.error(e.getMessage)
+                false
             }
           }
         }

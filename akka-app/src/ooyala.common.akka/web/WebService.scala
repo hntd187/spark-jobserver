@@ -18,9 +18,14 @@ object WebService extends SimpleRoutingApp {
    * @param host The host string to bind to, defaults to "0.0.0.0"
    * @param port The port number to bind to
    */
-  def start(route: Route, system: ActorSystem,
-            host: String = "0.0.0.0", port: Int = 8080)(implicit sslContext: SSLContext,
-                                                        sslEngineProvider: ServerSSLEngineProvider) {
+  def start(
+    route:  Route,
+    system: ActorSystem,
+    host:   String      = "0.0.0.0",
+    port:   Int         = 8080
+  )(implicit
+    sslContext: SSLContext,
+    sslEngineProvider: ServerSSLEngineProvider) {
     implicit val actorSystem = system
     startServer(host, port)(route)
   }

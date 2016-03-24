@@ -65,9 +65,9 @@ object SparkJobUtils {
     // This is useful for setting configurations for hadoop connectors such as
     // elasticsearch, cassandra, etc.
     for (e <- Try(contextConfig.getConfig("passthrough"))) {
-         e.entrySet().asScala.map { s=>
-            conf.set(s.getKey, s.getValue.unwrapped.toString)
-         }
+      e.entrySet().asScala.map { s =>
+        conf.set(s.getKey, s.getValue.unwrapped.toString)
+      }
     }
 
     conf
@@ -87,11 +87,15 @@ object SparkJobUtils {
   def getContextTimeout(config: Config): Int = {
     config.getString("spark.master") match {
       case "yarn-client" =>
-        Try(config.getDuration("spark.jobserver.yarn-context-creation-timeout",
-              TimeUnit.MILLISECONDS).toInt / 1000).getOrElse(40)
-      case _               =>
-        Try(config.getDuration("spark.jobserver.context-creation-timeout",
-              TimeUnit.MILLISECONDS).toInt / 1000).getOrElse(15)
+        Try(config.getDuration(
+          "spark.jobserver.yarn-context-creation-timeout",
+          TimeUnit.MILLISECONDS
+        ).toInt / 1000).getOrElse(40)
+      case _ =>
+        Try(config.getDuration(
+          "spark.jobserver.context-creation-timeout",
+          TimeUnit.MILLISECONDS
+        ).toInt / 1000).getOrElse(15)
     }
   }
 }

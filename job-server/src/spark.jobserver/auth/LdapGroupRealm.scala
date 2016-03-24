@@ -63,8 +63,10 @@ class LdapGroupRealm extends JndiLdapRealm {
     }
   }
 
-  override def queryForAuthorizationInfo(principals: PrincipalCollection,
-                                         ldapContextFactory: LdapContextFactory): AuthorizationInfo = {
+  override def queryForAuthorizationInfo(
+    principals:         PrincipalCollection,
+    ldapContextFactory: LdapContextFactory
+  ): AuthorizationInfo = {
 
     val username = getAvailablePrincipal(principals).toString
     val ldapContext = ldapContextFactory.getSystemLdapContext()

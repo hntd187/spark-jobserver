@@ -2,7 +2,7 @@ package spark.jobserver
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark._
-import org.apache.spark.SparkContext._
+
 import scala.util.Try
 
 /**
@@ -15,7 +15,13 @@ import scala.util.Try
  */
 object WordCountExample extends SparkJob {
   def main(args: Array[String]) {
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     val conf = new SparkConf().setMaster("local[4]").setAppName("WordCountExample")
+=======
+    val conf = new SparkConf()
+      .setMaster("local[4]")
+      .setAppName("WordCountExample")
+>>>>>>> Part of an extensive update for this...
     val sc = new SparkContext(conf)
     val config = ConfigFactory.parseString("")
     val results = runJob(sc, config)

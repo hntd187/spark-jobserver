@@ -1,13 +1,13 @@
 package spark.jobserver
 
 import akka.actor.{ActorRef, Props}
-import com.yammer.metrics.core.Meter
+import com.codahale.metrics.Meter
 import ooyala.common.akka.InstrumentedActor
 import ooyala.common.akka.metrics.YammerMetrics
 import org.joda.time.DateTime
 import scala.collection.mutable
 import scala.util.Try
-import spark.jobserver.io.{JobDAOActor, JobInfo, JobDAO}
+import spark.jobserver.io.{JobDAOActor, JobInfo}
 
 object JobStatusActor {
   case class JobInit(jobInfo: JobInfo)
@@ -104,8 +104,7 @@ class JobStatusActor(jobDao: ActorRef) extends InstrumentedActor with YammerMetr
       }
   }
 
-  private def processStatus[M <: StatusMessage](msg: M, logMessage: String, remove: Boolean = false)
-                                               (infoModifier: (JobInfo, M) => JobInfo) {
+  private def processStatus[M <: StatusMessage](msg: M, logMessage: String, remove: Boolean = false)(infoModifier: (JobInfo, M) => JobInfo) {
     if (infos.contains(msg.jobId)) {
       infos(msg.jobId) = infoModifier(infos(msg.jobId), msg)
       logger.info("Job {} {}", msg.jobId: Any, logMessage)
@@ -124,7 +123,7 @@ class JobStatusActor(jobDao: ActorRef) extends InstrumentedActor with YammerMetr
 
     lazy val getShortName = Try(msgClass.split('.').last).toOption.getOrElse(msgClass)
 
-    metricStatusRates.getOrElseUpdate(msgClass, meter(getShortName, "messages")).mark()
+    metricStatusRates.getOrElseUpdate(msgClass, meter(getShortName + "messages")).mark()
   }
 
   private def publishMessage(jobId: String, message: StatusMessage) {

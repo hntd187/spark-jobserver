@@ -95,7 +95,7 @@ object JobServer {
           .toMap
 
       // Ensure that the jars exist
-      for(jarPath <- initialJars.values) {
+      for (jarPath <- initialJars.values) {
         val f = new java.io.File(jarPath)
         if (!f.exists) {
           val msg =
@@ -115,7 +115,7 @@ object JobServer {
 
       Await.result(future, contextTimeout.seconds) match {
         case InvalidJar => sys.error("Could not store initial job jars.")
-        case _ =>
+        case _          =>
       }
     }
   }

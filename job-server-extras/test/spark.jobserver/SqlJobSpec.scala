@@ -22,7 +22,8 @@ class SqlJobSpec extends ExtrasJobSpecBase(SqlJobSpec.getNewSystem) {
 
   val emptyConfig = ConfigFactory.parseString("spark.master = bar")
   val queryConfig = ConfigFactory.parseString(
-                      """sql = "SELECT firstName, lastName FROM addresses WHERE city = 'San Jose'" """)
+    """sql = "SELECT firstName, lastName FROM addresses WHERE city = 'San Jose'" """
+  )
 
   before {
     dao = new InMemoryDAO
@@ -40,7 +41,7 @@ class SqlJobSpec extends ExtrasJobSpecBase(SqlJobSpec.getNewSystem) {
       uploadTestJar()
       manager ! JobManagerActor.StartJob("demo", sqlLoaderClass, emptyConfig, syncEvents ++ errorEvents)
       expectMsgPF(6 seconds, "Did not get JobResult") {
-        case JobResult(_, result: Long) => result should equal (3L)
+        case JobResult(_, result: Long) => result should equal(3L)
       }
       expectNoMsg()
 
@@ -48,7 +49,7 @@ class SqlJobSpec extends ExtrasJobSpecBase(SqlJobSpec.getNewSystem) {
       expectMsgPF(6 seconds, "Did not get JobResult") {
         case JobResult(_, result: Array[Row]) =>
           result should have length (2)
-          result(0)(0) should equal ("Bob")
+          result(0)(0) should equal("Bob")
       }
       expectNoMsg()
     }

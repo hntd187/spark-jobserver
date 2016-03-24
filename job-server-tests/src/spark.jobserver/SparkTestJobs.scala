@@ -4,7 +4,6 @@ import com.typesafe.config.Config
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 
-
 trait SparkTestJob extends SparkJob {
   def validate(sc: SparkContext, config: Config): SparkJobValidation = SparkJobValid
 }
@@ -35,7 +34,7 @@ class SleepJob extends SparkTestJob {
 class CacheSomethingJob extends SparkTestJob {
   def runJob(sc: SparkContext, config: Config): Any = {
     val dd = sc.parallelize(Seq(2, 4, 9, 16, 25, 36, 55, 66))
-               .map(_ * 2)
+      .map(_ * 2)
     dd.setName("numbers")
     dd.cache()
     dd.sum.toInt

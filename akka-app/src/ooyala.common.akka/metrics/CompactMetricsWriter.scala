@@ -1,11 +1,8 @@
 package ooyala.common.akka.metrics
 
-import com.yammer.metrics.core._
-import com.yammer.metrics.Metrics
+import com.codahale.metrics._
 import org.slf4j.Logger
 import java.util.concurrent.TimeUnit
-import com.yammer.metrics.stats.Snapshot
-
 
 /**
  * Writes out metrics in a form suitable for writing to log files. For example a counter will be written
@@ -14,14 +11,18 @@ import com.yammer.metrics.stats.Snapshot
  *   ooyala.common.akka.example.SomeActor.pending-futures(count = 20)
  * </pre>
  */
-class CompactMetricsWriter(private val log: Logger) extends MetricProcessor[Logger] {
+class CompactMetricsWriter(private val log: Logger, private val registry: MetricRegistry) {
 
-  import collection.JavaConverters._
+  val reporter = Slf4jReporter.forRegistry(registry)
+    .outputTo(log)
+    .convertRatesTo(TimeUnit.SECONDS)
+    .convertDurationsTo(TimeUnit.MILLISECONDS)
+    .build()
 
-  def process(registry: MetricsRegistry = Metrics.defaultRegistry()) {
-    registry.allMetrics().asScala.foreach {
-      case (metricName, metricsObject) => metricsObject.processWith(this, metricName, log)
-    }
+  reporter.start(5, TimeUnit.SECONDS)
+  /*
+  def process() {
+
   }
 
   def processMeter(name: MetricName, meter: Metered, logger: Logger) {
@@ -35,7 +36,7 @@ class CompactMetricsWriter(private val log: Logger) extends MetricProcessor[Logg
   }
 
   def processHistogram(name: MetricName, histogram: Histogram, logger: Logger) {
-    logger.info(processMetric(name) { sb => renderHistogram(histogram.getSnapshot, sb)})
+    logger.info(processMetric(name) { sb => renderHistogram(histogram.getSnapshot, sb) })
   }
 
   def processTimer(name: MetricName, timer: Timer, logger: Logger) {
@@ -81,16 +82,17 @@ class CompactMetricsWriter(private val log: Logger) extends MetricProcessor[Logg
 
   private def abbrev(timeUnit: TimeUnit) = {
     timeUnit match {
-      case TimeUnit.NANOSECONDS => "ns"
+      case TimeUnit.NANOSECONDS  => "ns"
       case TimeUnit.MICROSECONDS => "us"
       case TimeUnit.MILLISECONDS => "ms"
-      case TimeUnit.SECONDS => "s"
-      case TimeUnit.MINUTES => "m"
-      case TimeUnit.HOURS => "h"
-      case TimeUnit.DAYS => "d"
+      case TimeUnit.SECONDS      => "s"
+      case TimeUnit.MINUTES      => "m"
+      case TimeUnit.HOURS        => "h"
+      case TimeUnit.DAYS         => "d"
       case _ =>
         throw new IllegalArgumentException("Unrecognized TimeUnit: " + timeUnit)
     }
 
   }
+  */
 }

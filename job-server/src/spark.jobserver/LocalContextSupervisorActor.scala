@@ -1,19 +1,17 @@
 package spark.jobserver
 
-import akka.actor.{Terminated, Props, ActorRef, PoisonPill}
+import java.lang.Thread
+import akka.actor.{ActorRef, PoisonPill, Props, Terminated}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 import ooyala.common.akka.InstrumentedActor
-import spark.jobserver.JobManagerActor.{SparkContextDead, SparkContextAlive, SparkContextStatus}
+import spark.jobserver.JobManagerActor.{SparkContextAlive, SparkContextDead, SparkContextStatus}
 import spark.jobserver.io.JobDAO
 import spark.jobserver.util.SparkJobUtils
+
 import scala.collection.mutable
-import scala.concurrent.Await
 import scala.util.{Failure, Success, Try}
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 
 /** Messages common to all ContextSupervisors */
 object ContextSupervisor {
@@ -23,7 +21,7 @@ object ContextSupervisor {
   case class AddContext(name: String, contextConfig: Config)
   case class StartAdHocContext(classPath: String, contextConfig: Config)
   case class GetContext(name: String) // returns JobManager, JobResultActor
-  case class GetResultActor(name: String)  // returns JobResultActor
+  case class GetResultActor(name: String) // returns JobResultActor
   case class StopContext(name: String)
 
   // Errors/Responses
@@ -69,13 +67,14 @@ object ContextSupervisor {
  */
 class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
   import ContextSupervisor._
+
   import scala.collection.JavaConverters._
   import scala.concurrent.duration._
 
   val config = context.system.settings.config
   val defaultContextConfig = config.getConfig("spark.context-settings")
   val contextTimeout = SparkJobUtils.getContextTimeout(config)
-  import context.dispatcher   // to get ExecutionContext for futures
+  import context.dispatcher // to get ExecutionContext for futures
 
   private val contexts = mutable.HashMap.empty[String, (ActorRef, ActorRef)]
 
@@ -96,7 +95,7 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
       if (contexts contains name) {
         originator ! ContextAlreadyExists
       } else {
-        startContext(name, mergedConfig, false, contextTimeout) { contextMgr =>
+        startContext(name, mergedConfig, isAdHoc = false, contextTimeout) { contextMgr =>
           originator ! ContextInitialized
         } { err =>
           originator ! ContextInitError(err)
@@ -112,12 +111,12 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
       // Keep generating context name till there is no collision
       var contextName = ""
       do {
-        contextName = java.util.UUID.randomUUID().toString().substring(0, 8) + "-" + classPath
+        contextName = java.util.UUID.randomUUID().toString.substring(0, 8) + "-" + classPath
       } while (contexts contains contextName)
 
-      // Create JobManagerActor and JobResultActor
       startContext(contextName, mergedConfig, true, contextTimeout) { contextMgr =>
         originator ! contexts(contextName)
+
       } { err =>
         originator ! ContextInitError(err)
       }
@@ -128,6 +127,7 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
     case GetContext(name) =>
       if (contexts contains name) {
         val future = (contexts(name)._1 ? SparkContextStatus) (contextTimeout.seconds)
+
         val originator = sender
         future.collect {
           case SparkContextAlive => originator ! contexts(name)
@@ -150,18 +150,26 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
       }
 
     case Terminated(actorRef) =>
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
       val name = actorRef.path.name
+=======
+      val name: String = actorRef.path.name
+>>>>>>> Part of an extensive update for this...
       logger.info("Actor terminated: " + name)
       contexts.remove(name)
   }
 
-  private def startContext(name: String, contextConfig: Config, isAdHoc: Boolean, timeoutSecs: Int = 1)
-                          (successFunc: ActorRef => Unit)
-                          (failureFunc: Throwable => Unit) {
+  private def startContext(
+    name:          String,
+    contextConfig: Config,
+    isAdHoc:       Boolean,
+    timeoutSecs:   Int     = 1
+  )(successFunc: ActorRef => Unit)(failureFunc: Throwable => Unit) {
     require(!(contexts contains name), "There is already a context named " + name)
     logger.info("Creating a SparkContext named {}", name)
 
     val resultActorRef = if (isAdHoc) Some(globalResultActor) else None
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     val mergedConfig = ConfigFactory.parseMap(
                          Map("is-adhoc" -> isAdHoc.toString,
                              "context.name" -> name,
@@ -170,6 +178,12 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
     val ref = context.actorOf(JobManagerActor.props(mergedConfig), name)
     (ref ? JobManagerActor.Initialize(
       dao, resultActorRef))(Timeout(timeoutSecs.second)).onComplete {
+=======
+    val ref = context.actorOf(Props(
+      classOf[JobManagerActor], dao, name, contextConfig, isAdHoc, resultActorRef
+    ), name)
+    (ref ? JobManagerActor.Initialize)(Timeout(timeoutSecs.second)).onComplete {
+>>>>>>> Part of an extensive update for this...
       case Failure(e: Exception) =>
         logger.error("Exception after sending Initialize to JobManagerActor", e)
         // Make sure we try to shut down the context in case it gets created anyways
@@ -194,10 +208,10 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
       contexts.keySet().asScala.foreach { contextName =>
         val contextConfig = config.getConfig("spark.contexts." + contextName)
           .withFallback(defaultContextConfig)
-        startContext(contextName, contextConfig, false, contextTimeout) { ref => } {
+        startContext(contextName, contextConfig, isAdHoc = false, contextTimeout) { ref => } {
           e => logger.error("Unable to start context " + contextName, e)
         }
-        Thread sleep 500 // Give some spacing so multiple contexts can be created
+        Thread.sleep(500) // Give some spacing so multiple contexts can be created
       }
     }
   }

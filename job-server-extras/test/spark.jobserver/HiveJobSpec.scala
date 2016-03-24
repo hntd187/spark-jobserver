@@ -28,24 +28,34 @@ class HiveJobSpec extends ExtrasJobSpecBase(HiveJobSpec.getNewSystem) {
 
   val emptyConfig = ConfigFactory.parseString("spark.master = bar")
   val queryConfig = ConfigFactory.parseString(
-                      """sql = "SELECT firstName, lastName FROM `default`.`test_addresses` WHERE city = 'San Jose'" """)
+    """sql = "SELECT firstName, lastName FROM `default`.`test_addresses` WHERE city = 'San Jose'" """
+  )
 
   before {
     dao = new InMemoryDAO
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
     daoActor = system.actorOf(JobDAOActor.props(dao))
     manager = system.actorOf(JobManagerActor.props(
                              HiveJobSpec.getContextConfig(false, HiveJobSpec.contextConfig)))
+=======
+    manager = system.actorOf(JobManagerActor.props(dao, "test", HiveJobSpec.contextConfig, false))
+>>>>>>> Part of an extensive update for this...
   }
 
   describe("Spark Hive Jobs") {
     it("should be able to create a Hive table, then query it using separate Hive-SQL jobs") {
+<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
       manager ! JobManagerActor.Initialize(daoActor, None)
       expectMsgClass(30 seconds, classOf[JobManagerActor.Initialized])
+=======
+      manager ! JobManagerActor.Initialize
+      expectMsgClass(60 seconds, classOf[JobManagerActor.Initialized])
+>>>>>>> Part of an extensive update for this...
 
       uploadTestJar()
       manager ! JobManagerActor.StartJob("demo", hiveLoaderClass, emptyConfig, syncEvents ++ errorEvents)
       expectMsgPF(120 seconds, "Did not get JobResult") {
-        case JobResult(_, result: Long) => result should equal (3L)
+        case JobResult(_, result: Long) => result should equal(3L)
       }
       expectNoMsg()
 
@@ -53,7 +63,7 @@ class HiveJobSpec extends ExtrasJobSpecBase(HiveJobSpec.getNewSystem) {
       expectMsgPF(6 seconds, "Did not get JobResult") {
         case JobResult(_, result: Array[Row]) =>
           result should have length (2)
-          result(0)(0) should equal ("Bob")
+          result(0)(0) should equal("Bob")
       }
       expectNoMsg()
     }

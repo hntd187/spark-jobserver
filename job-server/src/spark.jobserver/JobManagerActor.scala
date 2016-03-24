@@ -1,17 +1,20 @@
 package spark.jobserver
 
+import java.lang.Thread
 import java.util.concurrent.Executors._
 import akka.actor.{ActorRef, Props, PoisonPill}
 import com.typesafe.config.Config
 import java.net.{URI, URL}
 import java.util.concurrent.atomic.AtomicInteger
 import ooyala.common.akka.InstrumentedActor
-import org.apache.spark.{ SparkEnv, SparkContext }
+import org.apache.spark.{SparkEnv, SparkContext}
 import org.joda.time.DateTime
-import scala.concurrent.{ Future, ExecutionContext }
+import scala.concurrent.{Future, ExecutionContext}
 import scala.util.{Failure, Success, Try}
 import spark.jobserver.ContextSupervisor.StopContext
+
 import spark.jobserver.io.{JobDAOActor, JobDAO, JobInfo, JarInfo}
+
 import spark.jobserver.util.{ContextURLClassLoader, SparkJobUtils}
 
 object JobManagerActor {
@@ -61,7 +64,17 @@ object JobManagerActor {
  *   }
  * }}}
  */
+
 class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
+
+class JobManagerActor(
+    dao:            JobDAO,
+    contextName:    String,
+    contextConfig:  Config,
+    isAdHoc:        Boolean,
+    resultActorRef: Option[ActorRef] = None
+) extends InstrumentedActor {
+
 
   import CommonMessages._
   import JobManagerActor._
@@ -116,6 +129,7 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
         jobContext = createContextFromConfig()
         sparkEnv = SparkEnv.get
         jobCache = new JobCache(jobCacheSize, daoActor, jobContext.sparkContext, jarLoader)
+
         getSideJars(contextConfig).foreach { jarUri => jobContext.sparkContext.addJar(jarUri) }
         sender ! Initialized(contextName, resultActor)
       } catch {
@@ -166,6 +180,7 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
                        events: Set[Class[_]],
                        jobContext: ContextLike,
                        sparkEnv: SparkEnv): Option[Future[Any]] = {
+
     var future: Option[Future[Any]] = None
     breakable {
       import akka.pattern.ask
@@ -219,6 +234,7 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
       val jobInfo = JobInfo(jobId, contextName, jarInfo, classPath, DateTime.now(), None, None)
       future =
         Option(getJobFuture(jobJarInfo, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+
     }
 
     future
@@ -327,7 +343,7 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
     val uri = new URI(jarUri)
     uri.getScheme match {
       case "local" => "file://" + uri.getPath
-      case _ => jarUri
+      case _       => jarUri
     }
   }
 
@@ -337,5 +353,5 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
   // present on every node, whereas file:// will be assumed only present on driver node
   private def getSideJars(config: Config): Seq[String] =
     Try(config.getStringList("dependent-jar-uris").asScala.toSeq).
-     orElse(Try(config.getString("dependent-jar-uris").split(",").toSeq)).getOrElse(Nil)
+      orElse(Try(config.getString("dependent-jar-uris").split(",").toSeq)).getOrElse(Nil)
 }

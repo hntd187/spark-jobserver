@@ -54,6 +54,7 @@ class RDDPersister[T] extends NamedObjectPersister[NamedRDD[T]] {
  */
 trait NamedRddSupport extends NamedObjectSupport { self: SparkJob =>
 
+
   /**
    * NamedRdds - a trait that gives you safe, concurrent creation and access to named RDDs
    * (the native SparkContext interface only has access to RDDs by numbers).

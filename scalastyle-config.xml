@@ -19,7 +19,7 @@
  <check level="error" class="org.scalastyle.scalariform.SpacesBeforePlusChecker" enabled="true"></check>
  <check level="error" class="org.scalastyle.file.FileLineLengthChecker" enabled="true">
   <parameters>
-   <parameter name="maxLineLength"><![CDATA[110]]></parameter>
+   <parameter name="maxLineLength"><![CDATA[150]]></parameter>
    <parameter name="tabSize"><![CDATA[2]]></parameter>
   </parameters>
  </check>
@@ -41,7 +41,6 @@
  <check level="error" class="org.scalastyle.scalariform.EqualsHashCodeChecker" enabled="true"></check>
  <check level="error" class="org.scalastyle.scalariform.IllegalImportsChecker" enabled="true">
   <parameters>
-   <parameter name="illegalImports"><![CDATA[sun._,java.awt._,collection.JavaConversions._,scala.collection.JavaConversions._]]></parameter>
   </parameters>
  </check>
  <check level="error" class="org.scalastyle.scalariform.ParameterNumberChecker" enabled="true">

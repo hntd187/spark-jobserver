@@ -17,8 +17,7 @@ class DataFileDAO(config: Config) {
   // set of files managed by this class
   private val files = mutable.HashSet.empty[String]
 
-
-  private val dataFile : File = {
+  private val dataFile: File = {
 
     val rootDir = config.getString("spark.jobserver.datadao.rootdir")
     val rootDirFile = new File(rootDir)
