@@ -1,13 +1,13 @@
 package spark.jobserver
 
-import akka.actor.{ ActorRef, ActorSystem, Props }
-import akka.testkit.{ ImplicitSender, TestKit }
-import org.apache.spark.{ SparkContext, SparkConf }
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.testkit.{ImplicitSender, TestKit}
+import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.storage.StorageLevel
-import org.scalatest.{ FunSpecLike, FunSpec, BeforeAndAfterAll, BeforeAndAfter }
+import org.scalatest.{FunSpecLike, FunSpec, BeforeAndAfterAll, BeforeAndAfter}
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import spark.jobserver.CommonMessages.{ JobErroredOut, JobResult }
+import spark.jobserver.CommonMessages.{JobErroredOut, JobResult}
 import java.util.concurrent.TimeoutException
 import scala.concurrent.duration._
 import org.apache.spark.rdd.RDD
@@ -58,7 +58,7 @@ class JobWithNamedRddsSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
 
     it("get() should respect timeout when rdd is known, but not yet available") {
 
-      var rdd : Option[RDD[Int]] = None
+      var rdd: Option[RDD[Int]] = None
       val thread = new Thread {
         override def run {
           namedTestRdds.getOrElseCreate("rdd-sleep", {

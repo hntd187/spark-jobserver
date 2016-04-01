@@ -95,11 +95,7 @@ class LocalContextSupervisorSpec extends TestKit(LocalContextSupervisorSpec.syst
       expectMsg(Seq("c1", "c2"))
       supervisor ! GetResultActor("c1")
       val rActor = expectMsgClass(classOf[ActorRef])
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-=======
-      rActor.path.toString should endWith("result-actor")
->>>>>>> Part of an extensive update for this...
-      rActor.path.toString should not include ("global")
+      rActor.path.toString should not include "global"
     }
 
     it("should be able to stop contexts already running") {

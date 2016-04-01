@@ -29,7 +29,7 @@ trait JobSpecConfig {
       "spark.jobserver.max-jobs-per-context" -> MaxJobsPerContext,
       "spark.jobserver.named-object-creation-timeout" -> "60 s",
       "akka.log-dead-letters" -> Integer.valueOf(0),
-      "spark.master" -> "local[4]",
+      "spark.master" -> "local[*]",
       "context-factory" -> contextFactory,
       "spark.context-settings.test" -> ""
     )
@@ -37,9 +37,11 @@ trait JobSpecConfig {
   }
 
   def getContextConfig(adhoc: Boolean, baseConfig: Config = config): Config =
-    ConfigFactory.parseMap(Map("context.name" -> "ctx",
-                               "context.actorname" -> "ctx",
-                               "is-adhoc" -> adhoc.toString).asJava).withFallback(baseConfig)
+    ConfigFactory.parseMap(Map(
+      "context.name" -> "ctx",
+      "context.actorname" -> "ctx",
+      "is-adhoc" -> adhoc.toString
+    ).asJava).withFallback(baseConfig)
 
   lazy val contextConfig = {
     val ConfigMap = Map(

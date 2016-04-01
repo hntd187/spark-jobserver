@@ -31,8 +31,9 @@ class JobStatusActor(jobDao: ActorRef) extends InstrumentedActor with YammerMetr
   private val subscribers = new mutable.HashMap[String, mutable.MultiMap[Class[_], ActorRef]]
 
   // metrics
-  val metricNumSubscriptions = gauge("num-subscriptions", subscribers.size)
-  val metricNumJobInfos = gauge("num-running-jobs", infos.size)
+
+  val metricNumSubscriptions = gauge(f"${getClass.getSimpleName}.num-subscriptions", subscribers.size)
+  val metricNumJobInfos = gauge(f"${getClass.getSimpleName}.num-running-jobs", infos.size)
   val metricStatusRates = mutable.HashMap.empty[String, Meter]
 
   override def postStop(): Unit = {
@@ -78,31 +79,31 @@ class JobStatusActor(jobDao: ActorRef) extends InstrumentedActor with YammerMetr
 
     case msg: JobStarted =>
       processStatus(msg, "started") {
-        case (info, msg) =>
+        case (info, `msg`) =>
           info.copy(startTime = msg.startTime)
       }
 
     case msg: JobFinished =>
       processStatus(msg, "finished OK", remove = true) {
-        case (info, msg) =>
+        case (info, `msg`) =>
           info.copy(endTime = Some(msg.endTime))
       }
 
     case msg: JobValidationFailed =>
       processStatus(msg, "validation failed", remove = true) {
-        case (info, msg) =>
+        case (info, `msg`) =>
           info.copy(endTime = Some(msg.endTime), error = Some(msg.err))
       }
 
     case msg: JobErroredOut =>
       processStatus(msg, "finished with an error", remove = true) {
-        case (info, msg) =>
+        case (info, `msg`) =>
           info.copy(endTime = Some(msg.endTime), error = Some(msg.err))
       }
 
     case msg: JobKilled =>
       processStatus(msg, "killed", remove = true) {
-        case (info, msg) =>
+        case (info, `msg`) =>
           info.copy(endTime = Some(msg.endTime))
       }
   }
@@ -126,7 +127,7 @@ class JobStatusActor(jobDao: ActorRef) extends InstrumentedActor with YammerMetr
 
     lazy val getShortName = Try(msgClass.split('.').last).toOption.getOrElse(msgClass)
 
-    metricStatusRates.getOrElseUpdate(msgClass, meter(getShortName + "messages")).mark()
+    metricStatusRates.getOrElseUpdate(msgClass, meter(f"${getShortName}.messages")).mark()
   }
 
   private def publishMessage(jobId: String, message: StatusMessage) {

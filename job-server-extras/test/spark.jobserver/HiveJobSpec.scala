@@ -2,11 +2,10 @@ package spark.jobserver
 
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.Row
-import org.apache.spark.{SparkContext, SparkConf}
-
 import org.apache.spark.sql.hive.test.TestHiveContext
-import spark.jobserver.context.{HiveContextLike, HiveContextFactory}
-import spark.jobserver.io.{JobDAO, JobDAOActor}
+import org.apache.spark.{SparkConf, SparkContext}
+import spark.jobserver.context.{HiveContextFactory, HiveContextLike}
+import spark.jobserver.io.JobDAOActor
 
 class TestHiveContextFactory extends HiveContextFactory {
   override protected def contextFactory(conf: SparkConf): C =
@@ -18,9 +17,10 @@ object HiveJobSpec extends JobSpecConfig {
 }
 
 class HiveJobSpec extends ExtrasJobSpecBase(HiveJobSpec.getNewSystem) {
-  import scala.concurrent.duration._
+
   import CommonMessages._
-  import JobManagerSpec.MaxJobsPerContext
+
+  import scala.concurrent.duration._
 
   val classPrefix = "spark.jobserver."
   private val hiveLoaderClass = classPrefix + "HiveLoaderJob"
@@ -33,24 +33,17 @@ class HiveJobSpec extends ExtrasJobSpecBase(HiveJobSpec.getNewSystem) {
 
   before {
     dao = new InMemoryDAO
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
+
     daoActor = system.actorOf(JobDAOActor.props(dao))
     manager = system.actorOf(JobManagerActor.props(
-                             HiveJobSpec.getContextConfig(false, HiveJobSpec.contextConfig)))
-=======
-    manager = system.actorOf(JobManagerActor.props(dao, "test", HiveJobSpec.contextConfig, false))
->>>>>>> Part of an extensive update for this...
+      HiveJobSpec.getContextConfig(false, HiveJobSpec.contextConfig)
+    ))
   }
 
   describe("Spark Hive Jobs") {
     it("should be able to create a Hive table, then query it using separate Hive-SQL jobs") {
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
       manager ! JobManagerActor.Initialize(daoActor, None)
-      expectMsgClass(30 seconds, classOf[JobManagerActor.Initialized])
-=======
-      manager ! JobManagerActor.Initialize
       expectMsgClass(60 seconds, classOf[JobManagerActor.Initialized])
->>>>>>> Part of an extensive update for this...
 
       uploadTestJar()
       manager ! JobManagerActor.StartJob("demo", hiveLoaderClass, emptyConfig, syncEvents ++ errorEvents)
@@ -60,7 +53,7 @@ class HiveJobSpec extends ExtrasJobSpecBase(HiveJobSpec.getNewSystem) {
       expectNoMsg()
 
       manager ! JobManagerActor.StartJob("demo", hiveQueryClass, queryConfig, syncEvents ++ errorEvents)
-      expectMsgPF(6 seconds, "Did not get JobResult") {
+      expectMsgPF(30 seconds, "Did not get JobResult") {
         case JobResult(_, result: Array[Row]) =>
           result should have length (2)
           result(0)(0) should equal("Bob")

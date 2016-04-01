@@ -44,15 +44,6 @@ object Dependencies {
 
   lazy val scalaLib = Seq("org.scala-lang" % "scala-library" % "2.10.6")
 
-  /*
-  lazy val scalaLib = if (scala.util.Properties.versionString.split(" ")(1).startsWith("2.10")) {
-    Seq("org.scala-lang" % "scala-library" % "2.11.8")
-  }else{
-    Seq()
-  }
-  */
-
-
   lazy val sparkExtraDeps = Seq(
     "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
     "org.apache.spark" %% "spark-sql" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),

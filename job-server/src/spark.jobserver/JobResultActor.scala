@@ -19,8 +19,8 @@ class JobResultActor extends InstrumentedActor with YammerMetrics {
   private val subscribers = mutable.HashMap.empty[String, ActorRef] // subscribers
 
   // metrics
-  val metricSubscribers = gauge("subscribers-size", subscribers.size)
-  val metricResultCache = gauge("result-cache-size", cache.size)
+  //val metricSubscribers = gauge("subscribers-size", subscribers.size)
+  //val metricResultCache = gauge("result-cache-size", cache.size)
 
   def wrappedReceive: Receive = {
     case Subscribe(jobId, receiver, events) =>

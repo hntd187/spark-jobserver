@@ -11,10 +11,10 @@ import scalariform.formatter.preferences._
 //  - You get full IDE support
 object JobServerBuild extends Build {
   lazy val dirSettings = Seq(
-    unmanagedSourceDirectories in Compile <<= Seq(baseDirectory(_ / "src" )).join,
-    unmanagedSourceDirectories in Test <<= Seq(baseDirectory(_ / "test" )).join,
-    scalaSource in Compile <<= baseDirectory(_ / "src" ),
-    scalaSource in Test <<= baseDirectory(_ / "test" )
+    unmanagedSourceDirectories in Compile <<= Seq(baseDirectory(_ / "src")).join,
+    unmanagedSourceDirectories in Test <<= Seq(baseDirectory(_ / "test")).join,
+    scalaSource in Compile <<= baseDirectory(_ / "src"),
+    scalaSource in Test <<= baseDirectory(_ / "test")
   )
 
   import Dependencies._
@@ -29,13 +29,13 @@ object JobServerBuild extends Build {
 
   lazy val jobServer = Project(id = "job-server", base = file("job-server"),
     settings = commonSettings ++ revolverSettings ++ Assembly.settings ++ Seq(
-      description  := "Spark as a Service: a RESTful job server for Apache Spark",
-      libraryDependencies ++= sparkDeps ++ slickDeps ++ securityDeps ++ coreTestDeps,
+      description := "Spark as a Service: a RESTful job server for Apache Spark",
+      libraryDependencies ++= sparkDeps ++ slickDeps ++ securityDeps ++ coreTestDeps ++ logbackDeps,
 
       // Automatically package the test jar when we run tests here
       // And always do a clean before package (package depends on clean) to clear out multiple versions
       test in Test <<= (test in Test).dependsOn(packageBin in Compile in jobServerTestJar)
-                                     .dependsOn(clean in Compile in jobServerTestJar),
+        .dependsOn(clean in Compile in jobServerTestJar),
 
       console in Compile <<= Defaults.consoleTask(fullClasspath in Compile, console in Compile),
 
@@ -51,37 +51,36 @@ object JobServerBuild extends Build {
       // TODO: Remove this once we upgrade to Spark 1.4 ... see resolution of SPARK-5281.
       // Also: note that fork won't work when VPN is on or other funny networking
       fork in Test := true
-      ) ++ publishSettings
+    ) ++ publishSettings
   ) dependsOn(akkaApp, jobServerApi)
 
   lazy val jobServerTestJar = Project(id = "job-server-tests", base = file("job-server-tests"),
-                                      settings = commonSettings ++ jobServerTestJarSettings
-                                     ) dependsOn jobServerApi
+    settings = commonSettings ++ jobServerTestJarSettings
+  ) dependsOn jobServerApi
 
   lazy val jobServerApi = Project(id = "job-server-api",
-                                  base = file("job-server-api"),
-                                  settings = commonSettings ++ publishSettings)
+    base = file("job-server-api"),
+    settings = commonSettings ++ publishSettings)
 
   lazy val jobServerExtras = Project(id = "job-server-extras",
-                                     base = file("job-server-extras"),
-                                     settings = commonSettings ++ jobServerExtrasSettings
-                                    ) dependsOn(jobServerApi,
-                                                jobServer % "compile->compile; test->test")
+    base = file("job-server-extras"),
+    settings = commonSettings ++ jobServerExtrasSettings
+  ) dependsOn(jobServerApi, jobServer % "compile->compile; test->test")
 
   // This meta-project aggregates all of the sub-projects and can be used to compile/test/style check
   // all of them with a single command.
   //
   // NOTE: if we don't define a root project, SBT does it for us, but without our settings
   lazy val root = Project(id = "root", base = file("."),
-                    settings = commonSettings ++ ourReleaseSettings ++ rootSettings
-                  ).aggregate(jobServer, jobServerApi, jobServerTestJar, akkaApp, jobServerExtras).
-                   dependsOn(jobServer, jobServerExtras)
+    settings = commonSettings ++ ourReleaseSettings ++ rootSettings
+  ).aggregate(jobServer, jobServerApi, jobServerTestJar, akkaApp, jobServerExtras).
+    dependsOn(jobServer, jobServerExtras)
 
   lazy val jobServerExtrasSettings = revolverSettings ++ Assembly.settings ++ publishSettings ++ Seq(
     libraryDependencies ++= sparkExtraDeps,
     // Extras packages up its own jar for testing itself
     test in Test <<= (test in Test).dependsOn(packageBin in Compile)
-                                   .dependsOn(clean in Compile),
+      .dependsOn(clean in Compile),
     fork in Test := true,
     // Temporarily disable test for assembly builds so folks can package and get started.  Some tests
     // are flaky in extras esp involving paths.
@@ -93,7 +92,7 @@ object JobServerBuild extends Build {
     libraryDependencies ++= sparkDeps ++ apiDeps,
     publishArtifact := false,
     description := "Test jar for Spark Job Server",
-    exportJars := true        // use the jar instead of target/classes
+    exportJars := true // use the jar instead of target/classes
   )
 
   lazy val rootSettings = Seq(
@@ -121,18 +120,18 @@ object JobServerBuild extends Build {
   // To add an extra jar to the classpath when doing "re-start" for quick development, set the
   // env var EXTRA_JAR to the absolute full path to the jar
   lazy val extraJarPaths = Option(System.getenv("EXTRA_JAR"))
-                             .map(jarpath => Seq(Attributed.blank(file(jarpath))))
-                             .getOrElse(Nil)
+    .map(jarpath => Seq(Attributed.blank(file(jarpath))))
+    .getOrElse(Nil)
 
   // Create a default Scala style task to run with compiles
   lazy val runScalaStyle = taskKey[Unit]("testScalaStyle")
 
   lazy val commonSettings = Defaults.coreDefaultSettings ++ dirSettings ++ implicitlySettings ++ Seq(
     organization := "spark.jobserver",
-    crossPaths   := true,
-    crossScalaVersions := Seq("2.10.6","2.11.8"),
+    crossPaths := true,
+    crossScalaVersions := Seq("2.10.6", "2.11.8"),
     scalaVersion := "2.10.6",
-    publishTo    := Some(Resolver.file("Unused repo", file("target/unusedrepo"))),
+    publishTo := Some(Resolver.file("Unused repo", file("target/unusedrepo"))),
 
     // scalastyleFailOnError := true,
     runScalaStyle := {
@@ -144,8 +143,8 @@ object JobServerBuild extends Build {
     // Need to pass in language options or import scala.language.* to enable them.
     // See SIP-18 (https://docs.google.com/document/d/1nlkvpoIRkx7at1qJEZafJwthZ3GeIklTFhqmXMvTX9Q/edit)
     scalacOptions := Seq("-deprecation", "-feature",
-                         "-language:implicitConversions", "-language:postfixOps"),
-    resolvers    ++= Dependencies.repos,
+      "-language:implicitConversions", "-language:postfixOps"),
+    resolvers ++= Dependencies.repos,
     libraryDependencies ++= apiDeps,
     parallelExecution in Test := false,
     // We need to exclude jms/jmxtools/etc because it causes undecipherable SBT errors  :(
@@ -158,7 +157,7 @@ object JobServerBuild extends Build {
   ) ++ scalariformPrefs
 
   lazy val publishSettings = Seq(
-    licenses += ("Apache-2.0", url("http://choosealicense.com/licenses/apache/"))
+    licenses +=("Apache-2.0", url("http://choosealicense.com/licenses/apache/"))
   )
 
   // change to scalariformSettings for auto format on compile; defaultScalariformSettings to disable

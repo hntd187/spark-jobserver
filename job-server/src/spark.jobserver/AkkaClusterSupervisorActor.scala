@@ -186,6 +186,9 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
         contexts(ctxName) = (ref, resActor)
         context.watch(ref)
         successFunc(ref)
+      case _ =>
+        logger.info("Failed to send initialize message to context " + ref)
+        ref ! PoisonPill
     }
   }
 

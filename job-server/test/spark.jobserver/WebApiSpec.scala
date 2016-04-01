@@ -1,11 +1,10 @@
 package spark.jobserver
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
-import spark.jobserver.io.{JobDAOActor, JobInfo, JarInfo}
 import org.joda.time.DateTime
-import org.scalatest.{Matchers, FunSpec, BeforeAndAfterAll}
-import spray.http.StatusCodes._
+import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
+import spark.jobserver.io.{JarInfo, JobDAOActor, JobInfo}
 import spray.routing.HttpService
 import spray.testkit.ScalatestRouteTest
 
@@ -15,11 +14,8 @@ import spray.testkit.ScalatestRouteTest
 class WebApiSpec extends FunSpec with Matchers with BeforeAndAfterAll
     with ScalatestRouteTest with HttpService {
   import scala.collection.JavaConverters._
-  import spray.httpx.SprayJsonSupport._
-  import spray.json.DefaultJsonProtocol._
-  import ooyala.common.akka.web.JsonUtils._
 
-  def actorRefFactory = system
+  def actorRefFactory: ActorSystem = system
 
   val bindConfKey = "spark.jobserver.bind-address"
   val bindConfVal = "127.0.0.1"
@@ -29,7 +25,7 @@ class WebApiSpec extends FunSpec with Matchers with BeforeAndAfterAll
     spark {
       master = "${masterConfVal}"
       jobserver.bind-address = "${bindConfVal}"
-      jobserver.short-timeout = 3 s
+      jobserver.short-timeout = 10 s
     }
     shiro {
       authentication = off
@@ -59,7 +55,7 @@ class WebApiSpec extends FunSpec with Matchers with BeforeAndAfterAll
     import JobInfoActor._
     import JobManagerActor._
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case GetJobStatus("_mapseq") =>
         sender ! finishedJobInfo
       case GetJobResult("_mapseq") =>

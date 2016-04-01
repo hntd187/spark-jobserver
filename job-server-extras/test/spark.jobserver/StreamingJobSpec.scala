@@ -30,7 +30,8 @@ class StreamingJobSpec extends JobSpecBase(StreamingJobSpec.getNewSystem) {
     dao = new InMemoryDAO
     daoActor = system.actorOf(JobDAOActor.props(dao))
     manager = system.actorOf(JobManagerActor.props(
-                             StreamingJobSpec.getContextConfig(false, StreamingJobSpec.contextConfig)))
+      StreamingJobSpec.getContextConfig(false, StreamingJobSpec.contextConfig)
+    ))
   }
 
   describe("Spark Streaming Jobs") {

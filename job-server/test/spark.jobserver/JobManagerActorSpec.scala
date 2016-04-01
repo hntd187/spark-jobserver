@@ -33,13 +33,8 @@ class JobManagerActorSpec extends JobManagerSpec {
       sum2 should equal(sum)
     }
 
-<<<<<<< a8805815585d384253ffbb1712bc2a25c0664b68
-    it ("jobs should be able to cache and retrieve RDDs by name") {
-      manager ! JobManagerActor.Initialize(daoActor, None)
-=======
     it("jobs should be able to cache and retrieve RDDs by name") {
-      manager ! JobManagerActor.Initialize
->>>>>>> Part of an extensive update for this...
+      manager ! JobManagerActor.Initialize(daoActor, None)
       expectMsgClass(classOf[JobManagerActor.Initialized])
 
       uploadTestJar()

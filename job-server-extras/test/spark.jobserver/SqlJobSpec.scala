@@ -29,7 +29,8 @@ class SqlJobSpec extends ExtrasJobSpecBase(SqlJobSpec.getNewSystem) {
     dao = new InMemoryDAO
     daoActor = system.actorOf(JobDAOActor.props(dao))
     manager = system.actorOf(JobManagerActor.props(
-                             SqlJobSpec.getContextConfig(false, SqlJobSpec.contextConfig)))
+      SqlJobSpec.getContextConfig(false, SqlJobSpec.contextConfig)
+    ))
     supervisor = TestProbe().ref
   }
 
