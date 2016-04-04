@@ -1,15 +1,19 @@
 package spark.jobserver.util
 
+import java.util.Map.Entry
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
 import org.apache.spark.SparkConf
+
+import scala.collection.mutable
 import scala.util.Try
 
 /**
  * Holds a few functions common to Job Server SparkJob's and SparkContext's
  */
 object SparkJobUtils {
+
   import collection.JavaConverters._
 
   /**
@@ -17,14 +21,13 @@ object SparkJobUtils {
    * Note that anything in contextConfig with keys beginning with spark. get
    * put directly in the SparkConf.
    *
-   * @param config the overall Job Server configuration (Typesafe Config)
+   * @param config        the overall Job Server configuration (Typesafe Config)
    * @param contextConfig the Typesafe Config specific to initializing this context
    *                      (typically based on particular context/job)
-   * @param contextName the context name
+   * @param contextName   the context name
    * @return a SparkConf with everything properly configured
    */
-  def configToSparkConf(config: Config, contextConfig: Config,
-                        contextName: String): SparkConf = {
+  def configToSparkConf(config: Config, contextConfig: Config, contextName: String): SparkConf = {
 
     val sparkMaster = SparkMasterProvider.fromConfig(config).getSparkMaster(config)
 
@@ -71,6 +74,13 @@ object SparkJobUtils {
     }
 
     conf
+  }
+
+  def getHadoopConfig(config: Config): Map[String, String] = {
+    Try(config.getConfig("hadoop").entrySet().asScala.map { e =>
+      println(e)
+      e.getKey -> e.getValue.unwrapped().toString
+    }.toMap).getOrElse(Map())
   }
 
   /**

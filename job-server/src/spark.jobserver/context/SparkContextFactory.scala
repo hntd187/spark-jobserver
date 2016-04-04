@@ -12,14 +12,16 @@ import spark.jobserver.util.SparkJobUtils
  * SparkContext has access to certain dynamically loaded classes, for example, job jars.
  */
 trait SparkContextFactory {
+
   import SparkJobUtils._
 
   type C <: ContextLike
 
   /**
    * Creates a SparkContext or derived context.
-   * @param sparkConf the Spark Context configuration.
-   * @param config the context config
+   *
+   * @param sparkConf   the Spark Context configuration.
+   * @param config      the context config
    * @param contextName the name of the context to start
    * @return the newly created context.
    */
@@ -27,9 +29,10 @@ trait SparkContextFactory {
 
   /**
    * Creates a SparkContext or derived context.
-   * @param config the overall system / job server Typesafe Config
+   *
+   * @param config        the overall system / job server Typesafe Config
    * @param contextConfig the config specific to this particular context
-   * @param contextName the name of the context to start
+   * @param contextName   the name of the context to start
    * @return the newly created context.
    */
   def makeContext(config: Config, contextConfig: Config, contextName: String): C = {
@@ -49,10 +52,18 @@ class DefaultSparkContextFactory extends SparkContextFactory {
 
   type C = SparkContext with ContextLike
 
+  import SparkJobUtils._
+
   def makeContext(sparkConf: SparkConf, config: Config, contextName: String): C = {
-    new SparkContext(sparkConf) with ContextLike {
+    println(config)
+    val hadoopConfig: Map[String, String] = getHadoopConfig(config)
+    println(hadoopConfig)
+    val sc = new SparkContext(sparkConf) with ContextLike {
       def sparkContext: SparkContext = this
+
       def isValidJob(job: SparkJobBase): Boolean = job.isInstanceOf[SparkJob]
     }
+    for ((k, v) <- hadoopConfig) sc.hadoopConfiguration.set(k, v)
+    sc
   }
 }
