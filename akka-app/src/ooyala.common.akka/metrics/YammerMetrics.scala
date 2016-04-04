@@ -10,36 +10,43 @@ object YammerMetrics {
 trait YammerMetrics {
 
   def meter(name: String): Meter = {
-    if (YammerMetrics.metrics.getNames.contains(MetricRegistry.name(getClass, name))) {
-      YammerMetrics.metrics.getMeters().get(MetricRegistry.name(getClass, name))
-    } else {
+    metric[Meter](name).getOrElse {
       YammerMetrics.metrics.meter(MetricRegistry.name(getClass, name))
     }
   }
 
-  def gauge[T](name: String, metric: => T): Gauge[_] = {
-    if (YammerMetrics.metrics.getNames.contains(MetricRegistry.name(getClass, name))) {
-      YammerMetrics.metrics.getGauges().get(MetricRegistry.name(getClass, name))
-    } else {
+  def counter(name: String): Counter = {
+    metric[Counter](name).getOrElse {
+      YammerMetrics.metrics.counter(MetricRegistry.name(getClass, name))
+    }
+  }
+
+  def gauge[T](name: String, metricFunc: => T): Gauge[_] = {
+    metric[Gauge[T]](name).getOrElse {
       YammerMetrics.metrics.register(MetricRegistry.name(getClass, name), new Gauge[T]() {
-        override def getValue: T = metric
+        override def getValue: T = metricFunc
       })
     }
   }
 
   def histogram(name: String): Histogram = {
-    if (YammerMetrics.metrics.getNames.contains(MetricRegistry.name(getClass, name))) {
-      YammerMetrics.metrics.getHistograms().get(MetricRegistry.name(getClass, name))
-    } else {
+    metric[Histogram](name).getOrElse {
       YammerMetrics.metrics.histogram(MetricRegistry.name(getClass, name))
     }
   }
 
   def timer(name: String): Timer = {
-    if (YammerMetrics.metrics.getTimers.containsKey(MetricRegistry.name(getClass, name))) {
-      YammerMetrics.metrics.getTimers().get(MetricRegistry.name(getClass, name))
-    } else {
+    metric[Timer](name).getOrElse {
       YammerMetrics.metrics.timer(MetricRegistry.name(getClass, name))
+    }
+  }
+
+  private def metric[T <: Metric](name: String): Option[T] = {
+    val metricName = MetricRegistry.name(getClass, name)
+    if (YammerMetrics.metrics.getNames.contains(metricName)) {
+      Some(YammerMetrics.metrics.getMetrics.get(metricName).asInstanceOf[T])
+    } else {
+      None: Option[T]
     }
   }
 }

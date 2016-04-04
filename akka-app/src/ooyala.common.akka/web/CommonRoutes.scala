@@ -38,14 +38,13 @@ object MetricsSerializer {
   def toJSON(registry: MetricRegistry): String = {
     val metricsMap: JMap[String, Metric] = registry.getMetrics
     val valueMap: Map[String, JsValue] = metricsMap.toMap.map {
-      case (name: String, metric: Metric) => {
+      case (name: String, metric: Metric) =>
         metric match {
           case m: Timer     => name -> mapTimer(m)
           case m: Meter     => name -> mapMeter(m)
           case m: Gauge[_]  => name -> Map("value" -> m.getValue.asInstanceOf[Int]).toJson
           case m: Histogram => name -> mapHist(m)
         }
-      }
     }
     valueMap.toJson.prettyPrint
   }

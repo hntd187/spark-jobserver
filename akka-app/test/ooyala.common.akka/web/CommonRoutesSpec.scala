@@ -9,7 +9,7 @@ import spray.testkit.ScalatestRouteTest
 class CommonRoutesSpec extends FunSpec with Matchers with ScalatestRouteTest with CommonRoutes with YammerMetrics {
   def actorRefFactory: ActorSystem = system
 
-  val metricCounter = YammerMetrics.metrics.counter("test-counter")
+  val metricCounter = counter("test-counter")
   val metricMeter = meter("requests")
   val metricHistogram = histogram("test-hist")
   val metricTimer = timer("test-timer")
