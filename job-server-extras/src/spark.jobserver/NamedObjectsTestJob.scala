@@ -1,11 +1,12 @@
 package spark.jobserver
 
-import com.typesafe.config.Config
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{ SQLContext, Row, DataFrame }
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.storage.StorageLevel
+
+import com.typesafe.config.Config
 
 /**
  * A test job that accepts a SQLContext, as opposed to the regular SparkContext.

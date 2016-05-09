@@ -1,10 +1,12 @@
 package spark.jobserver.util
 
+import org.apache.spark.SparkConf
+
+import scala.util.Try
+
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
-import org.apache.spark.SparkConf
-import scala.util.Try
 
 /**
  * Holds a few functions common to Job Server SparkJob's and SparkContext's

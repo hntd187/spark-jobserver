@@ -1,6 +1,6 @@
 package spark.jobserver
 
-import akka.actor.{ActorSystem, ActorRef}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.ImplicitSender
 import akka.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}

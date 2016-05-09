@@ -60,7 +60,7 @@ object JobServerBuild extends Build {
 
   lazy val jobServerTestJar = Project(id = "job-server-tests", base = file("job-server-tests"),
                                       settings = commonSettings ++ jobServerTestJarSettings
-                                     ) dependsOn(jobServerApi)
+                                     ) dependsOn jobServerApi
 
   lazy val jobServerApi = Project(id = "job-server-api",
                                   base = file("job-server-api"),
@@ -69,8 +69,7 @@ object JobServerBuild extends Build {
   lazy val jobServerExtras = Project(id = "job-server-extras",
                                      base = file("job-server-extras"),
                                      settings = commonSettings ++ jobServerExtrasSettings
-                                    ) dependsOn(jobServerApi,
-                                                jobServer % "compile->compile; test->test")
+                                    ) dependsOn(jobServerApi, jobServer % "test->test")
 
   // This meta-project aggregates all of the sub-projects and can be used to compile/test/style check
   // all of them with a single command.

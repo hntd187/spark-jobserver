@@ -1,11 +1,11 @@
 package spark.jobserver
 
-import akka.actor.Props
-import akka.testkit.{TestProbe, TestActorRef}
-import com.typesafe.config.{ConfigValueFactory, ConfigFactory}
 import org.apache.spark.sql.Row
+
+import akka.testkit.TestProbe
+import com.typesafe.config.ConfigFactory
 import spark.jobserver.context.SQLContextFactory
-import spark.jobserver.io.{JobDAOActor, JobDAO}
+import spark.jobserver.io.JobDAOActor
 
 object SqlJobSpec extends JobSpecConfig {
   override val contextFactory = classOf[SQLContextFactory].getName
@@ -13,8 +13,8 @@ object SqlJobSpec extends JobSpecConfig {
 
 class SqlJobSpec extends ExtrasJobSpecBase(SqlJobSpec.getNewSystem) {
   import scala.concurrent.duration._
+
   import CommonMessages._
-  import JobManagerSpec.MaxJobsPerContext
 
   val classPrefix = "spark.jobserver."
   private val sqlLoaderClass = classPrefix + "SqlLoaderJob"

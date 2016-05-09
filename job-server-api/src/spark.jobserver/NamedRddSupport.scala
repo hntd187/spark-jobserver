@@ -1,9 +1,9 @@
 package spark.jobserver
 
-import akka.util.Timeout
-import scala.concurrent.duration._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+
+import akka.util.Timeout
 
 /**
  * wrapper for named objects of type RDD[T]

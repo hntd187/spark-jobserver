@@ -2,7 +2,7 @@ package spark.jobserver
 
 import com.typesafe.config.ConfigFactory
 import spark.jobserver.context.StreamingContextFactory
-import spark.jobserver.io.{JobInfo, JobDAOActor}
+import spark.jobserver.io.{JobDAOActor, JobInfo}
 
 /**
  * Test for Straming Jobs.
