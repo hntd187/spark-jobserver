@@ -1,34 +1,28 @@
 package spark.jobserver.auth
 
-import akka.actor.{ Actor, Props }
-import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
-import spark.jobserver._
-import spark.jobserver.io.{ JobInfo, JarInfo }
-import org.joda.time.DateTime
-import org.scalatest.{ Matchers, FunSpec, BeforeAndAfterAll }
-import spray.http.StatusCodes._
-import spray.http.HttpHeaders.Authorization
-import spray.http.BasicHttpCredentials
-import spray.routing.{ HttpService, Route }
-import spray.testkit.ScalatestRouteTest
-import org.apache.shiro.config.IniSecurityManagerFactory
-import org.apache.shiro.mgt.DefaultSecurityManager
-import org.apache.shiro.mgt.SecurityManager
-import org.apache.shiro.realm.Realm
+import akka.actor.{Actor, ActorSystem, Props}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.apache.shiro.SecurityUtils
-import org.apache.shiro.config.Ini
+import org.apache.shiro.config.{Ini, IniSecurityManagerFactory}
+import org.joda.time.DateTime
+import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
+import spark.jobserver._
+import spark.jobserver.io.{JarInfo, JobInfo}
+import spray.http.BasicHttpCredentials
+import spray.http.HttpHeaders.Authorization
+import spray.http.StatusCodes._
+import spray.routing.{HttpService, Route}
+import spray.testkit.ScalatestRouteTest
 
 // Tests authorization only, actual responses are tested elsewhere
 // Does NOT test underlying Supervisor / JarManager functionality
 // HttpService trait is needed for the sealRoute() which wraps exception handling
 class WebApiWithAuthenticationSpec extends FunSpec with Matchers with BeforeAndAfterAll
     with ScalatestRouteTest with HttpService {
-  import scala.collection.JavaConverters._
   import spray.httpx.SprayJsonSupport._
   import spray.json.DefaultJsonProtocol._
-  import ooyala.common.akka.web.JsonUtils._
 
-  def actorRefFactory = system
+  def actorRefFactory: ActorSystem = system
 
   val bindConfKey = "spark.jobserver.bind-address"
   val bindConfVal = "127.0.0.1"
@@ -36,9 +30,9 @@ class WebApiWithAuthenticationSpec extends FunSpec with Matchers with BeforeAndA
   val masterConfVal = "spark://localhost:7077"
   val config = ConfigFactory.parseString(s"""
     spark {
-      master = "${masterConfVal}"
-      jobserver.bind-address = "${bindConfVal}"
-      jobserver.short-timeout = 3 s
+      master = "$masterConfVal"
+      jobserver.bind-address = "$bindConfVal"
+      jobserver.short-timeout = 3 seconds
     }
     shiro {
       authentication = on
@@ -71,20 +65,21 @@ class WebApiWithAuthenticationSpec extends FunSpec with Matchers with BeforeAndA
     api.myRoutes
   }
 
-  private val routes = routesWithTimeout("1 s")
+  private val routes = routesWithTimeout("3 seconds")
 
   // set to some valid user
   private val authorization = new Authorization(new BasicHttpCredentials("presidentskroob", "12345"))
-  private val authorizationInvalidPassword = new Authorization(new BasicHttpCredentials("presidentskroob", "xxx"))
+  private val authorizationInvalidPassword = new Authorization(
+    new BasicHttpCredentials("presidentskroob", "xxx")
+  )
   private val authorizationUnknownUser = new Authorization(new BasicHttpCredentials("whoami", "xxx"))
   private val dt = DateTime.parse("2013-05-29T00Z")
   private val jobInfo = JobInfo("foo-1", "context", JarInfo("demo", dt), "com.abc.meme", dt, None, None)
-  private val ResultKey = "result"
 
   class DummyActor extends Actor {
     import CommonMessages._
     import JobInfoActor._
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case ListJars                       => sender ! Map()
       case GetJobStatus(id)               => sender ! jobInfo
       case GetJobResult(id)               => sender ! JobResult(id, id + "!!!")
@@ -100,7 +95,8 @@ class WebApiWithAuthenticationSpec extends FunSpec with Matchers with BeforeAndA
     }
 
     it("should not allow user with invalid password") {
-      Post("/jars/foobar", Array[Byte](0, 1, 2)).withHeaders(authorizationInvalidPassword) ~> sealRoute(routes) ~> check {
+      Post("/jars/foobar", Array[Byte](0, 1, 2))
+        .withHeaders(authorizationInvalidPassword) ~> sealRoute(routes) ~> check {
         status should be(Unauthorized)
       }
     }
@@ -122,7 +118,8 @@ class WebApiWithAuthenticationSpec extends FunSpec with Matchers with BeforeAndA
 
     it("should not allow user with invalid password") {
       val config2 = "foo.baz = booboo"
-      Post("/jobs?appName=foo&classPath=com.abc.meme&context=one&sync=true", config2).withHeaders(authorizationInvalidPassword) ~>
+      Post("/jobs?appName=foo&classPath=com.abc.meme&context=one&sync=true", config2)
+        .withHeaders(authorizationInvalidPassword) ~>
         sealRoute(routes) ~> check {
           status should be(Unauthorized)
         }
@@ -160,21 +157,21 @@ class WebApiWithAuthenticationSpec extends FunSpec with Matchers with BeforeAndA
   describe("routes with timeout") {
     ignore("jobs should not allow user with valid authorization when timeout") {
       Get("/jobs/foobar").withHeaders(authorization) ~>
-        sealRoute(routesWithTimeout("0 s")) ~> check {
+        sealRoute(routesWithTimeout("0 seconds")) ~> check {
           status should be(InternalServerError)
         }
     }
 
     it("jars should not allow user with valid authorization when timeout") {
       Get("/jars").withHeaders(authorization) ~>
-        sealRoute(routesWithTimeout("0 s")) ~> check {
+        sealRoute(routesWithTimeout("0 seconds")) ~> check {
           status should be(InternalServerError)
         }
     }
 
     it("contexts should not allow user with valid authorization when timeout") {
       Get("/contexts").withHeaders(authorization) ~>
-        sealRoute(routesWithTimeout("0 s")) ~> check {
+        sealRoute(routesWithTimeout("0 seconds")) ~> check {
           status should be(InternalServerError)
         }
     }

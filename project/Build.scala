@@ -153,7 +153,7 @@ object JobServerBuild extends Build {
     parallelExecution in Test := false,
     publishArtifact := false,
     concurrentRestrictions := Seq(
-      Tags.limit(Tags.CPU, java.lang.Runtime.getRuntime().availableProcessors()),
+      Tags.limit(Tags.CPU, java.lang.Runtime.getRuntime.availableProcessors),
       // limit to 1 concurrent test task, even across sub-projects
       // Note: some components of tests seem to have the "Untagged" tag rather than "Test" tag.
       // So, we limit the sum of "Test", "Untagged" tags to 1 concurrent
@@ -198,6 +198,7 @@ object JobServerBuild extends Build {
     // See SIP-18 (https://docs.google.com/document/d/1nlkvpoIRkx7at1qJEZafJwthZ3GeIklTFhqmXMvTX9Q/edit)
     scalacOptions := Seq("-deprecation", "-feature",
                          "-language:implicitConversions", "-language:postfixOps"),
+    scalacOptions ++= (if(scalaBinaryVersion.value == "2.11") Seq("-Yrepl-class-based") else Seq()),
     resolvers    ++= Dependencies.repos,
     libraryDependencies ++= apiDeps,
     parallelExecution in Test := false,
