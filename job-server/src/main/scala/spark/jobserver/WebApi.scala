@@ -15,6 +15,7 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import spark.jobserver.JobManagerActor.JobKilledException
 import spark.jobserver.auth.{AuthInfo, SJSAuthenticator}
 import spark.jobserver.common.akka.web.JsonUtils.AnyJsonFormat
 import spark.jobserver.common.akka.web.{CommonRoutes, JsonUtils, WebService}
@@ -88,12 +89,16 @@ object WebApi {
     }
 
   def getJobReport(jobInfo: JobInfo, jobStarted: Boolean = false): Map[String, Any] = {
-    val statusMap = if (jobStarted) Map(StatusKey -> JobStatus.Started) else (jobInfo match {
-        case JobInfo(_, _, _, _, _, None, _) => Map(StatusKey -> JobStatus.Running)
-        case JobInfo(_, _, _, _, _, _, Some(ex)) => Map(StatusKey -> JobStatus.Error,
-          ResultKey -> formatException(ex))
-        case JobInfo(_, _, _, _, _, Some(e), None) => Map(StatusKey -> JobStatus.Finished)
-    })
+
+    val statusMap = if (jobStarted) Map(StatusKey -> JobStatus.Started) else jobInfo match {
+      case JobInfo(_, _, _, _, _, None, _) => Map(StatusKey -> JobStatus.Running)
+      case JobInfo(_, _, _, _, _, _, Some(ex)) =>
+        ex match {
+          case e: JobKilledException => Map(StatusKey -> JobStatus.Killed, ResultKey -> formatException(ex))
+          case _ => Map(StatusKey -> JobStatus.Error, ResultKey -> formatException(ex))
+        }
+      case JobInfo(_, _, _, _, _, Some(e), None) => Map(StatusKey -> "FINISHED")
+    }
     Map("jobId" -> jobInfo.jobId,
       "startTime" -> jobInfo.startTime.toString(),
       "classPath" -> jobInfo.classPath,
@@ -497,14 +502,14 @@ class WebApi(system: ActorSystem,
           }
         } ~
         //  DELETE /jobs/<jobId>
-        //  Stop the current job. All other jobs submited with this spark context
+        //  Stop the current job. All other jobs submitted with this spark context
         //  will continue to run
         (delete & path(Segment)) { jobId =>
           val future = jobInfoActor ? GetJobStatus(jobId)
           respondWithMediaType(MediaTypes.`application/json`) { ctx =>
             future.map {
               case NoSuchJobId =>
-                notFound(ctx, "No such job ID " + jobId.toString)
+                notFound(ctx, "No such job ID " + jobId)
               case JobInfo(_, contextName, _, classPath, _, None, _) =>
                 val jobManager = getJobManagerForContext(Some(contextName), config, classPath)
                 jobManager.get ! KillJob(jobId)
