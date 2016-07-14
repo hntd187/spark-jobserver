@@ -6,7 +6,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 import spark.jobserver._
-import spark.jobserver.io.JobFileDAO
+import spark.jobserver.io.{BinaryType, JobFileDAO}
 
 import scala.concurrent.Await
 
@@ -43,7 +43,7 @@ object SingleContextJobStress extends App with TestJarFinder {
 
   private def uploadJar(jarFilePath: String, appName: String) {
     val bytes = scala.io.Source.fromFile(jarFilePath, "ISO-8859-1").map(_.toByte).toArray
-    dao.saveJar(appName, DateTime.now, bytes)
+    dao.saveBinary(appName, BinaryType.Jar, DateTime.now, bytes)
   }
 
   private val demoJarPath = testJar.getAbsolutePath

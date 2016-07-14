@@ -4,6 +4,9 @@ import java.util.NoSuchElementException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.Try
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -15,18 +18,16 @@ import org.slf4j.LoggerFactory
 import spark.jobserver.auth.{AuthInfo, SJSAuthenticator}
 import spark.jobserver.common.akka.web.JsonUtils.AnyJsonFormat
 import spark.jobserver.common.akka.web.{CommonRoutes, JsonUtils, WebService}
-import spark.jobserver.io.{JobInfo, JobStatus}
+import spark.jobserver.io.{BinaryType, JobInfo, JobStatus}
 import spark.jobserver.routes.DataRoutes
 import spark.jobserver.util.{SSLContextFactory, SparkJobUtils}
+import spray.http.HttpHeaders.`Content-Type`
 import spray.http._
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.io.ServerSSLEngineProvider
 import spray.json.DefaultJsonProtocol._
 import spray.routing.directives.AuthMagnet
 import spray.routing.{HttpService, RequestContext, Route}
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Try
 
 
 object WebApi {
@@ -104,17 +105,17 @@ object WebApi {
 class WebApi(system: ActorSystem,
              config: Config,
              port: Int,
-             jarManager: ActorRef,
+             binaryManager: ActorRef,
              dataManager: ActorRef,
              supervisor: ActorRef,
              jobInfoActor: ActorRef)
     extends HttpService with CommonRoutes with DataRoutes with SJSAuthenticator with CORSSupport
                         with ChunkEncodedStreamingSupport {
+  import scala.concurrent.duration._
+
   import CommonMessages._
   import ContextSupervisor._
   import WebApi._
-
-  import scala.concurrent.duration._
 
   // Get spray-json type classes for serializing Map[String, Any]
   import JsonUtils._
@@ -136,7 +137,7 @@ class WebApi(system: ActorSystem,
   val logger = LoggerFactory.getLogger(getClass)
 
   val myRoutes = cors {
-    jarRoutes ~ contextRoutes ~ jobRoutes ~
+    binaryRoutes ~ jarRoutes ~ contextRoutes ~ jobRoutes ~
       dataRoutes ~ healthzRoutes ~ otherRoutes
   }
 
@@ -184,17 +185,88 @@ class WebApi(system: ActorSystem,
     WebService.start(myRoutes ~ commonRoutes, system, bindAddress, port)
   }
 
+  val contentType =
+    optionalHeaderValue {
+      case `Content-Type`(ct) => Some(ct)
+      case _ => None
+    }
+
+  /**
+    * Routes for listing and uploading binaries
+    *    GET /binaries              - lists all current binaries
+    *    POST /binaries/<appName>   - upload a new binary file
+    *
+    * NB when POSTing new binaries, the content-type header must
+    * be set to one of the types supported by the subclasses of the
+    * `BinaryType` trait. e.g. "application/java-archive" or
+    * application/python-archive" (may be expanded to support other types
+    * in future.
+    *
+    */
+  def binaryRoutes: Route = pathPrefix("binaries") {
+    // user authentication
+    authenticate(authenticator) { authInfo =>
+      // GET /binaries route returns a JSON map of the app name
+      // and the type of and last upload time of a binary.
+      get { ctx =>
+        val future = (binaryManager ? ListBinaries(None)).
+          mapTo[collection.Map[String, (BinaryType, DateTime)]]
+        future.map { binTimeMap =>
+          val stringTimeMap = binTimeMap.map {
+            case (app, (binType, dt)) =>
+              (app, Map("binary-type" -> binType.name, "upload-time" -> dt.toString()))
+          }.toMap
+          ctx.complete(stringTimeMap)
+        }.recover {
+          case e: Exception => ctx.complete(500, errMap(e, "ERROR"))
+        }
+      } ~
+      // POST /binaries/<appName>
+      // The <appName> needs to be unique; uploading a jar with the same appName will replace it.
+      // requires a recognised content-type header
+      post {
+        path(Segment) { appName =>
+          entity(as[Array[Byte]]) { binBytes =>
+            contentType {
+              case Some(x) =>
+                respondWithMediaType(MediaTypes.`application/json`) { ctx =>
+                  BinaryType.fromMediaType(x.mediaType) match {
+                    case Some(binaryType) =>
+                      val future = binaryManager ? StoreBinary(appName, binaryType, binBytes)
+
+                      future.map {
+                        case BinaryStored => ctx.complete(StatusCodes.OK)
+                        case InvalidBinary => badRequest(ctx, "Binary is not of the right format")
+                        case BinaryStorageFailure(ex) => ctx.complete(500, errMap(ex, "Storage Failure"))
+                      }.recover {
+                        case e: Exception => ctx.complete(500, errMap(e, "ERROR"))
+                      }
+                    case None => ctx.complete(415, s"Unsupported binary type ${x}")
+                  }
+                }
+              case None => complete(415, s"Content-Type header must be set to indicate binary type")
+            }
+          }
+        }
+      }
+    }
+  }
+
   /**
    * Routes for listing and uploading jars
    *    GET /jars              - lists all current jars
    *    POST /jars/<appName>   - upload a new jar file
+   *
+   * NB these routes are kept for legacy purposes but are deprecated in favour
+   *  of the /binaries routes.
    */
   def jarRoutes: Route = pathPrefix("jars") {
     // user authentication
     authenticate(authenticator) { authInfo =>
       // GET /jars route returns a JSON map of the app name and the last time a jar was uploaded.
       get { ctx =>
-        val future = (jarManager ? ListJars).mapTo[collection.Map[String, DateTime]]
+        val future = (binaryManager ? ListBinaries(Some(BinaryType.Jar))).
+          mapTo[collection.Map[String, (BinaryType, DateTime)]].map(_.mapValues(_._2))
         future.map { jarTimeMap =>
           val stringTimeMap = jarTimeMap.map { case (app, dt) => (app, dt.toString()) }.toMap
           ctx.complete(stringTimeMap)
@@ -207,11 +279,12 @@ class WebApi(system: ActorSystem,
         post {
           path(Segment) { appName =>
             entity(as[Array[Byte]]) { jarBytes =>
-              val future = jarManager ? StoreJar(appName, jarBytes)
+              val future = binaryManager ? StoreBinary(appName, BinaryType.Jar, jarBytes)
               respondWithMediaType(MediaTypes.`application/json`) { ctx =>
                 future.map {
-                  case JarStored  => ctx.complete(StatusCodes.OK)
-                  case InvalidJar => badRequest(ctx, "Jar is not of the right format")
+                  case BinaryStored  => ctx.complete(StatusCodes.OK)
+                  case InvalidBinary => badRequest(ctx, "Jar is not of the right format")
+                  case BinaryStorageFailure(ex) => ctx.complete(500, errMap(ex, "Storage Failure"))
                 }.recover {
                   case e: Exception => ctx.complete(500, errMap(e, "ERROR"))
                 }

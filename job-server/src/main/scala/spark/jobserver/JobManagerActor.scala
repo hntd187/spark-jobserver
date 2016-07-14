@@ -14,10 +14,9 @@ import org.joda.time.DateTime
 import org.scalactic._
 import spark.jobserver.api.{JobEnvironment, JobValidation}
 import spark.jobserver.common.akka.InstrumentedActor
-import spark.jobserver.context.{JobContainer, SparkContextFactory, _}
-import spark.jobserver.io.{JarInfo, JobDAOActor, JobInfo}
+import spark.jobserver.context._
+import spark.jobserver.io._
 import spark.jobserver.util.{ContextURLClassLoader, SparkJobUtils}
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -45,7 +44,6 @@ object JobManagerActor {
 }
 
 /**
-<<<<<<< 568d7f75c959e91be0f13d92dc348397dfebd11c:job-server/src/main/scala/spark/jobserver/JobManagerActor.scala
   * The JobManager actor supervises jobs running in a single SparkContext, as well as shared metadata.
   * It creates a SparkContext (or a StreamingContext etc. depending on the factory class)
   * It also creates and supervises a JobResultActor and JobStatusActor, although an existing JobResultActor
@@ -214,15 +212,17 @@ class JobManagerActor(contextConfig: Config, daoActor: ActorRef) extends Instrum
     val daoAskTimeout = Timeout(3 seconds)
     // TODO: refactor so we don't need Await, instead flatmap into more futures
     val resp = Await.result(
-      (daoActor ? JobDAOActor.GetLastUploadTime(appName))(daoAskTimeout).mapTo[JobDAOActor.LastUploadTime],
+      (daoActor ? JobDAOActor.GetLastUploadTimeAndType(appName))(daoAskTimeout).
+        mapTo[JobDAOActor.LastUploadTimeAndType],
       daoAskTimeout.duration)
 
-    val lastUploadTime = resp.lastUploadTime
-    if (lastUploadTime.isEmpty) return failed(NoSuchApplication)
+    val lastUploadTimeAndType = resp.uploadTimeAndType
+    if (!lastUploadTimeAndType.isDefined) return failed(NoSuchApplication)
+    val(lastUploadTime, binaryType) = lastUploadTimeAndType.get
 
-    val jobId = java.util.UUID.randomUUID().toString
-    val jobContainer = factory.loadAndValidateJob(appName, lastUploadTime.get,
-      classPath, jobCache) match {
+    val jobId = java.util.UUID.randomUUID().toString()
+    val jobContainer = factory.loadAndValidateJob(appName, lastUploadTime,
+                                                  classPath, jobCache) match {
       case Good(container)       => container
       case Bad(JobClassNotFound) => return failed(NoSuchClass)
       case Bad(JobWrongType)     => return failed(WrongJobType)
@@ -234,14 +234,10 @@ class JobManagerActor(contextConfig: Config, daoActor: ActorRef) extends Instrum
     resultActor ! Subscribe(jobId, sender, events)
     statusActor ! Subscribe(jobId, sender, events)
 
-    val jarInfo = JarInfo(appName, lastUploadTime.get)
-    val jobInfo = JobInfo(jobId, contextName, jarInfo, classPath, DateTime.now(), None, None)
-    jobContainer match {
-      case c: ScalaJobContainer =>
-        Some(getJobFuture[api.SparkJobBase](c, jobInfo, jobConfig, sender, jobContext, sparkEnv))
-      case c: JavaJobContainer =>
-        Some(getJobFuture[api.JSparkJob[_,_]](c, jobInfo, jobConfig, sender, jobContext, sparkEnv))
-    }
+    val binInfo = BinaryInfo(appName, binaryType, lastUploadTime)
+    val jobInfo = JobInfo(jobId, contextName, binInfo, classPath, DateTime.now(), None, None)
+
+    Some(getJobFuture(jobContainer, jobInfo, jobConfig, sender, jobContext, sparkEnv))
   }
 
   private def getJobFuture[C](container: JobContainer[C],

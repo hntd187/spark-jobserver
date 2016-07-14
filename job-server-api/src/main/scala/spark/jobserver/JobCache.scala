@@ -7,7 +7,7 @@ trait SparkJobInfo
 
 case class JobJarInfo(constructor: () => api.SparkJobBase,
                       className: String,
-                      jarFilePath: String) extends SparkJobInfo
+                      jarFilePath: String) extends BinaryJobInfo
 
 case class JavaJarInfo(constructor: () => JSparkJob[_, _],
                        className: String,
@@ -20,4 +20,5 @@ trait JobCache {
   def getSparkJob(appName: String, uploadTime: DateTime, classPath: String): JobJarInfo
   @throws[ClassNotFoundException]
   def getJavaJob(appName: String, uploadTime: DateTime, classPath: String): JavaJarInfo
+  def getPythonJob(appName: String, uploadTime: DateTime, classPath: String): PythonJobInfo
 }

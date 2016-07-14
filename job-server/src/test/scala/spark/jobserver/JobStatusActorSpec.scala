@@ -5,7 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
 import spark.jobserver.common.akka.AkkaTestUtils
-import spark.jobserver.io.{JarInfo, JobDAO, JobDAOActor, JobInfo}
+import spark.jobserver.io._
 
 object JobStatusActorSpec {
   val system = ActorSystem("test")
@@ -20,7 +20,7 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   private val jobId = "jobId"
   private val contextName = "contextName"
   private val appName = "appName"
-  private val jarInfo = JarInfo(appName, DateTime.now)
+  private val jarInfo = BinaryInfo(appName, BinaryType.Jar, DateTime.now)
   private val classPath = "classPath"
   private val jobInfo = JobInfo(jobId, contextName, jarInfo, classPath, DateTime.now, None, None)
 

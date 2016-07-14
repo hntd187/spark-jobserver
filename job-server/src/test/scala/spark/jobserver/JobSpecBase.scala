@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
 import spark.jobserver.common.akka.AkkaTestUtils
 import spark.jobserver.context.DefaultSparkContextFactory
-import spark.jobserver.io.JobDAO
+import spark.jobserver.io.{BinaryType, JobDAO}
 
 import scala.collection.JavaConverters._
 /**
@@ -63,6 +63,7 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll with S
   var daoActor: ActorRef = _
   var manager: ActorRef = _
   def testJar: java.io.File
+  def testEgg: java.io.File
   var supervisor: ActorRef = _
   def extrasJar: java.io.File
 
@@ -70,12 +71,18 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll with S
     AkkaTestUtils.shutdownAndWait(system)
   }
 
-  protected def uploadJar(dao: JobDAO, jarFilePath: String, appName: String) {
+  protected def uploadBinary(dao: JobDAO, jarFilePath: String, appName: String, binaryType: BinaryType) {
     val bytes = scala.io.Source.fromFile(jarFilePath, "ISO-8859-1").map(_.toByte).toArray
-    dao.saveJar(appName, DateTime.now, bytes)
+    dao.saveBinary(appName, binaryType, DateTime.now, bytes)
   }
 
-  protected def uploadTestJar(appName: String = "demo") { uploadJar(dao, testJar.getAbsolutePath, appName) }
+  protected def uploadTestJar(appName: String = "demo") {
+    uploadBinary(dao, testJar.getAbsolutePath, appName, BinaryType.Jar)
+  }
+
+  protected def uploadTestEgg(appName: String = "demo") {
+    uploadBinary(dao, testEgg.getAbsolutePath, appName, BinaryType.Egg)
+  }
 
   protected def getExtrasJarPath: String = extrasJar.getAbsolutePath
 

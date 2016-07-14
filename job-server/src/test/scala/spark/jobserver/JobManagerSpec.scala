@@ -1,6 +1,8 @@
 package spark.jobserver
 
-import java.io.Serializable
+import spark.jobserver.io.BinaryType
+
+import scala.collection.mutable
 
 import akka.testkit._
 import com.typesafe.config.ConfigFactory
@@ -43,7 +45,7 @@ abstract class JobManagerSpec extends JobSpecBase(JobManagerSpec.getNewSystem) w
     }
 
     it("should error out if loading garbage jar") {
-      uploadJar(dao, "../README.md", "notajar")
+      uploadBinary(dao, "../README.md", "notajar", BinaryType.Jar)
       manager ! JobManagerActor.Initialize(None)
       expectMsgClass(initMsgWait, classOf[JobManagerActor.Initialized])
       manager ! JobManagerActor.StartJob("notajar", "no.such.class", emptyConfig, Set.empty[Class[_]])
