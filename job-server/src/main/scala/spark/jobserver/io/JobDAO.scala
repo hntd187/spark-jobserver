@@ -123,7 +123,7 @@ trait JobDAO {
 
   /**
    * Return all job ids to their job configuration.
-   *
+   * @todo remove. used only in test
    * @return
    */
   def getJobConfigs: Future[Map[String, Config]]

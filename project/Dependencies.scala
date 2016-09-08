@@ -56,6 +56,11 @@ object Dependencies {
     "org.flywaydb" % "flyway-core" % flyway
   )
 
+  lazy val cassandraDeps = Seq(
+    "com.datastax.cassandra" % "cassandra-driver-core" % cassandra,
+    "com.datastax.cassandra" % "cassandra-driver-mapping" % cassandra
+  )
+
   lazy val logbackDeps = Seq(
     "ch.qos.logback" % "logback-classic" % logback
   )
@@ -65,7 +70,8 @@ object Dependencies {
   lazy val coreTestDeps = Seq(
     scalaTestDep,
     "com.typesafe.akka" %% "akka-testkit" % akka % "test",
-    "io.spray" %% "spray-testkit" % spray % "test"
+    "io.spray" %% "spray-testkit" % spray % "test",
+    "org.cassandraunit" % "cassandra-unit" % "2.2.2.1" % "test"
   )
 
   lazy val securityDeps = Seq(
