@@ -2,10 +2,19 @@ package spark.jobserver
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobStatusActorSpec.scala
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
 import spark.jobserver.common.akka.AkkaTestUtils
 import spark.jobserver.io._
+=======
+import spark.jobserver.io._
+import org.joda.time.DateTime
+import org.scalatest.Matchers
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike}
+import spark.jobserver.common.akka
+import spark.jobserver.common.akka.AkkaTestUtils
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobStatusActorSpec.scala
 
 object JobStatusActorSpec {
   val system = ActorSystem("test")
@@ -25,7 +34,11 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   private val jobInfo = JobInfo(jobId, contextName, jarInfo, classPath, DateTime.now, None, None)
 
   override def afterAll() {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobStatusActorSpec.scala
     AkkaTestUtils.shutdownAndWait(JobStatusActorSpec.system)
+=======
+    akka.AkkaTestUtils.shutdownAndWait(JobStatusActorSpec.system)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobStatusActorSpec.scala
   }
 
   var actor: ActorRef = _
@@ -41,7 +54,11 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   }
 
   after {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobStatusActorSpec.scala
     common.akka.AkkaTestUtils.shutdownAndWait(actor)
+=======
+    AkkaTestUtils.shutdownAndWait(actor)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobStatusActorSpec.scala
   }
 
   describe("JobStatusActor") {

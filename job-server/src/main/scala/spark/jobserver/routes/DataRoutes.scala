@@ -29,7 +29,11 @@ trait DataRoutes extends HttpService {
 
   def dataRoutes(dataManager: ActorRef)(implicit ec: ExecutionContext, ShortTimeout: Timeout): Route = {
     // Get spray-json type classes for serializing Map[String, Any]
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/routes/DataRoutes.scala
     import JsonUtils._
+=======
+    import spark.jobserver.common.akka.web.JsonUtils._
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/routes/DataRoutes.scala
 
     // GET /data route returns a JSON map of the stored files and their upload time
     get { ctx =>

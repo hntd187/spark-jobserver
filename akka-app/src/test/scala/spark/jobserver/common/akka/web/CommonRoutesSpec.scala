@@ -5,9 +5,13 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import com.yammer.metrics.Metrics
 import com.yammer.metrics.core.Gauge
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:akka-app/src/test/scala/spark/jobserver/common/akka/web/CommonRoutesSpec.scala
 import org.scalatest.{FunSpec, Matchers}
 import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
+=======
+import akka.actor.ActorSystem
+>>>>>>> Project Structure Updated (#626):akka-app/src/test/scala/spark/jobserver/common/akka/web/CommonRoutesSpec.scala
 
 class CommonRoutesSpec extends FunSpec with Matchers with ScalatestRouteTest with CommonRoutes {
   def actorRefFactory: ActorSystem = system

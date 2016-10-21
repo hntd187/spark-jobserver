@@ -2,12 +2,21 @@ package spark.jobserver
 
 import java.io.File
 
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/JobManager.scala
 import akka.actor.{ActorSystem, AddressFromURIString, Props}
 import akka.cluster.Cluster
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.slf4j.LoggerFactory
 import spark.jobserver.common.akka.actor.ProductionReaper
 import spark.jobserver.common.akka.actor.Reaper.WatchMe
+=======
+import akka.actor.{ActorSystem, Address, AddressFromURIString, Props}
+import akka.cluster.Cluster
+import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import spark.jobserver.common.akka.actor.Reaper.WatchMe
+import org.slf4j.LoggerFactory
+import spark.jobserver.common.akka.actor.ProductionReaper
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/JobManager.scala
 import spark.jobserver.io.{JobDAO, JobDAOActor}
 
 /**

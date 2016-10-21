@@ -9,9 +9,13 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 import akka.actor.{ActorRef, PoisonPill, Props}
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/JobManagerActor.scala
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
+=======
+import com.typesafe.config.Config
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/JobManagerActor.scala
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkEnv}
 import org.joda.time.DateTime
@@ -21,6 +25,13 @@ import spark.jobserver.common.akka.InstrumentedActor
 import spark.jobserver.context._
 import spark.jobserver.io._
 import spark.jobserver.util.{ContextURLClassLoader, SparkJobUtils}
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/JobManagerActor.scala
+=======
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
+
+import spark.jobserver.common.akka.InstrumentedActor
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/JobManagerActor.scala
 
 object JobManagerActor {
   // Messages

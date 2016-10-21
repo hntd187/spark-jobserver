@@ -11,6 +11,10 @@ class DataRoutesSpec extends WebApiSpec {
   import JsonUtils._
   import spray.httpx.SprayJsonSupport._
   import spray.json.DefaultJsonProtocol._
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/routes/DataRoutesSpec.scala
+=======
+  import spark.jobserver.common.akka.web.JsonUtils._
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/routes/DataRoutesSpec.scala
 
   describe("/data routes") {
 

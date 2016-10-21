@@ -10,12 +10,21 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.{InitialStateAsEvents, MemberEvent, MemberUp}
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/AkkaClusterSupervisorActor.scala
 import spark.jobserver.common.akka.InstrumentedActor
+=======
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/AkkaClusterSupervisorActor.scala
 import spark.jobserver.util.SparkJobUtils
 
 import scala.collection.mutable
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/AkkaClusterSupervisorActor.scala
+=======
+import scala.util.{Failure, Success, Try}
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/AkkaClusterSupervisorActor.scala
 import scala.sys.process._
 import scala.util.{Failure, Success, Try}
+
+import spark.jobserver.common.akka.InstrumentedActor
 
 /**
  * The AkkaClusterSupervisorActor launches Spark Contexts as external processes

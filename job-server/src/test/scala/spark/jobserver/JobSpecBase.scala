@@ -1,7 +1,12 @@
 package spark.jobserver
 
 import akka.actor.{ActorRef, ActorSystem}
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobSpecBase.scala
 import akka.testkit.{ImplicitSender, TestKit}
+=======
+import akka.testkit.ImplicitSender
+import akka.testkit.TestKit
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobSpecBase.scala
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.DateTime
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
@@ -68,7 +73,12 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll with S
   def extrasJar: java.io.File
 
   override def afterAll() {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobSpecBase.scala
     AkkaTestUtils.shutdownAndWait(system)
+=======
+    AkkaTestUtils.shutdownAndWait(manager)
+    TestKit.shutdownActorSystem(system)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobSpecBase.scala
   }
 
   protected def uploadBinary(dao: JobDAO, jarFilePath: String, appName: String, binaryType: BinaryType) {

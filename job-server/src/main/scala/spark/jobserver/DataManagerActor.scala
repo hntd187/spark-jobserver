@@ -1,8 +1,15 @@
 package spark.jobserver
 
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/DataManagerActor.scala
 import org.joda.time.DateTime
 import spark.jobserver.common.akka.InstrumentedActor
 import spark.jobserver.io.DataFileDAO
+=======
+import spark.jobserver.io.DataFileDAO
+import spark.jobserver.util.JarUtils
+import org.joda.time.DateTime
+import spark.jobserver.common.akka.InstrumentedActor
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/DataManagerActor.scala
 
 object DataManagerActor {
   // Messages to DataManager actor

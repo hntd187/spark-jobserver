@@ -5,8 +5,10 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import spark.jobserver.io.{JobDAO, JobDAOActor}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
-
 import scala.concurrent.duration._
+
+import spark.jobserver.common.akka
+import spark.jobserver.common.akka.AkkaTestUtils
 
 
 object LocalContextSupervisorSpec {
@@ -51,7 +53,11 @@ class LocalContextSupervisorSpec extends TestKit(LocalContextSupervisorSpec.syst
   with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
 
   override def afterAll() {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/LocalContextSupervisorSpec.scala
     spark.jobserver.common.akka.AkkaTestUtils.shutdownAndWait(LocalContextSupervisorSpec.system)
+=======
+    AkkaTestUtils.shutdownAndWait(LocalContextSupervisorSpec.system)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/LocalContextSupervisorSpec.scala
   }
 
   var supervisor: ActorRef = _
@@ -70,7 +76,11 @@ class LocalContextSupervisorSpec extends TestKit(LocalContextSupervisorSpec.syst
   }
 
   after {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/LocalContextSupervisorSpec.scala
     spark.jobserver.common.akka.AkkaTestUtils.shutdownAndWait(supervisor)
+=======
+    akka.AkkaTestUtils.shutdownAndWait(supervisor)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/LocalContextSupervisorSpec.scala
   }
 
   import ContextSupervisor._

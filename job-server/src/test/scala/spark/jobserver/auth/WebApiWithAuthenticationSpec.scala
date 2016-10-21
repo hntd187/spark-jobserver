@@ -37,6 +37,10 @@ class WebApiWithAuthenticationSpec extends FunSpec with Matchers
 
   import spray.httpx.SprayJsonSupport._
   import spray.json.DefaultJsonProtocol._
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/auth/WebApiWithAuthenticationSpec.scala
+=======
+  import spark.jobserver.common.akka.web.JsonUtils._
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/auth/WebApiWithAuthenticationSpec.scala
 
   def actorRefFactory = system
 

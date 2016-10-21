@@ -2,6 +2,7 @@ package spark.jobserver
 
 import akka.testkit._
 import spark.jobserver.CommonMessages.{JobErroredOut, JobResult}
+import spark.jobserver.common.akka.AkkaTestUtils
 import spark.jobserver.io.JobDAOActor
 
 import scala.concurrent.duration._
@@ -16,7 +17,11 @@ class JobManagerActorSpec extends JobManagerSpec {
   }
 
   after {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobManagerActorSpec.scala
     spark.jobserver.common.akka.AkkaTestUtils.shutdownAndWait(manager)
+=======
+    AkkaTestUtils.shutdownAndWait(manager)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobManagerActorSpec.scala
   }
 
   describe("starting jobs") {

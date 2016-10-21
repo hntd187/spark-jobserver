@@ -18,7 +18,11 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   import spark.jobserver.CommonMessages._
 
   override def afterAll() {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobResultActorSpec.scala
     AkkaTestUtils.shutdownAndWait(JobResultActorSpec.system)
+=======
+    akka.AkkaTestUtils.shutdownAndWait(JobResultActorSpec.system)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobResultActorSpec.scala
   }
 
   var actor: ActorRef = _
@@ -30,7 +34,11 @@ with FunSpecLike with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   }
 
   after {
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/JobResultActorSpec.scala
     akka.AkkaTestUtils.shutdownAndWait(actor)
+=======
+    AkkaTestUtils.shutdownAndWait(actor)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/JobResultActorSpec.scala
   }
 
   describe("JobResultActor") {

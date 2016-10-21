@@ -1,5 +1,6 @@
 package spark.jobserver
 
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/JobResultActor.scala
 import akka.actor.ActorRef
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import spark.jobserver.cache.LRUCache
@@ -8,6 +9,14 @@ import spark.jobserver.common.akka.metrics.YammerMetrics
 
 import scala.collection.mutable
 import scala.util.Try
+=======
+import scala.collection.mutable
+
+import akka.actor.ActorRef
+import spark.jobserver.common.akka.InstrumentedActor
+import spark.jobserver.common.akka.metrics.YammerMetrics
+import spark.jobserver.util.LRUCache
+>>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/JobResultActor.scala
 
 /**
  * It is an actor to manage results that are returned from jobs.

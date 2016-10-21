@@ -9,6 +9,8 @@ import scala.concurrent.duration._
 import spark.jobserver.common.akka.InstrumentedActor
 import scala.util.Try
 
+import spark.jobserver.common.akka.InstrumentedActor
+
 object JobDAOActor {
 
   //Requests

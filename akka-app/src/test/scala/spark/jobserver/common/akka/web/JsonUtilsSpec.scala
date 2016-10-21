@@ -49,7 +49,8 @@ class JsonUtilsSpec extends FunSpec with Matchers {
     it("should serialize third-level empty maps to JSON") {
       val expected = """{"a":1,"b":{"a1":1,"b1":{"a2":1,"b2":{}}}}"""
       import JsonUtils._
-      Map("a" -> 1, "b" -> Map("a1" -> 1, "b1" -> Map("a2" -> 1, "b2" -> Map.empty))).toJson.compactPrint should equal (expected)
+      Map("a" -> 1, "b" -> Map("a1" -> 1, "b1" -> Map("a2" -> 1, "b2" -> Map.empty)))
+        .toJson.compactPrint should equal (expected)
     }
 
     it("should serialize some other types") {
