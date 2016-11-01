@@ -4,6 +4,11 @@ import java.io.File
 import java.sql.Timestamp
 import javax.sql.DataSource
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.reflect.runtime.universe
+
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import org.apache.commons.dbcp.BasicDataSource
 import org.flywaydb.core.Flyway
@@ -11,15 +16,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcProfile
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.reflect.runtime.universe
-
-import scala.reflect.runtime.universe
-import slick.driver.JdbcProfile
-
-class JobSqlDAO(config: Config) extends JobDAO {
+class JobSqlDAO(config: Config) extends JobDAO with FileCasher {
   val slickDriverClass = config.getString("spark.jobserver.sqldao.slick-driver")
   val jdbcDriverClass = config.getString("spark.jobserver.sqldao.jdbc-driver")
 

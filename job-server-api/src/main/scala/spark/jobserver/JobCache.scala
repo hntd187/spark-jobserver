@@ -3,13 +3,20 @@ package spark.jobserver
 import org.joda.time.DateTime
 
 trait BinaryJobInfo
+trait SparkJobInfo
 
 case class JobJarInfo(constructor: () => api.SparkJobBase,
                       className: String,
-                      jarFilePath: String) extends BinaryJobInfo
+                      jarFilePath: String) extends BinaryJobInfo with SparkJobInfo
+
+case class JavaJarInfo(constructor: () => api.JSparkJob[_, _],
+                       className: String,
+                       jarFilePath: String) extends BinaryJobInfo with SparkJobInfo {
+  def job(): api.JSparkJob[_, _] = constructor.apply()
+}
 
 //For python jobs, there is no class loading or constructor required.
-case class PythonJobInfo(eggPath: String) extends BinaryJobInfo
+case class PythonJobInfo(eggPath: String) extends BinaryJobInfo with SparkJobInfo
 
 trait JobCache {
   /**
@@ -28,4 +35,5 @@ trait JobCache {
     * @return The case class containing the location of the binary file for the specified job.
     */
   def getPythonJob(appName: String, uploadTime: DateTime, classPath: String): PythonJobInfo
+  def getJavaJob(appName: String, uploadTime: DateTime, classPath: String): JavaJarInfo
 }

@@ -1,14 +1,9 @@
 package spark.jobserver.common.akka.actor
 
+import scala.collection.mutable.ArrayBuffer
+
 import akka.actor.{ActorRef, Terminated}
 import spark.jobserver.common.akka.InstrumentedActor
-
-import scala.collection.mutable.ArrayBuffer
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:akka-app/src/main/scala/spark/jobserver/common/akka/actor/Reaper.scala
-=======
-
-import spark.jobserver.common.akka.InstrumentedActor
->>>>>>> Project Structure Updated (#626):akka-app/src/main/scala/spark/jobserver/common/akka/actor/Reaper.scala
 
 // Taken from http://letitcrash.com/post/30165507578/shutdown-patterns-in-akka-2
 

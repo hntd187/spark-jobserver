@@ -33,12 +33,8 @@ object Dependencies {
   val sparkVersion = sys.env.getOrElse("SPARK_VERSION", spark)
   lazy val sparkDeps = Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757
-    "io.netty" % "netty-all" % "4.0.29.Final"
-=======
     // Force netty version.  This avoids some Spark netty dependency problem.
     "io.netty" % "netty-all" % "4.0.37.Final"
->>>>>>> Project Structure Updated (#626)
   )
 
   lazy val sparkExtraDeps = Seq(

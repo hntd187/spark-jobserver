@@ -10,25 +10,15 @@ import scala.util.Try
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/WebApi.scala
 import com.typesafe.config._
-=======
-import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigRenderOptions, ConfigValueFactory}
-import spark.jobserver.common.akka.web.JsonUtils.AnyJsonFormat
-import spark.jobserver.common.akka.web.{CommonRoutes, WebService}
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/WebApi.scala
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import spark.jobserver.JobManagerActor.JobKilledException
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/WebApi.scala
 import spark.jobserver.auth.{AuthInfo, SJSAuthenticator}
 import spark.jobserver.common.akka.web.JsonUtils.AnyJsonFormat
-import spark.jobserver.common.akka.web.{CommonRoutes, JsonUtils, WebService}
-=======
-import spark.jobserver.auth._
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/WebApi.scala
+import spark.jobserver.common.akka.web.{CommonRoutes, WebService}
 import spark.jobserver.io.{BinaryType, JobInfo, JobStatus}
 import spark.jobserver.routes.DataRoutes
 import spark.jobserver.util.{SSLContextFactory, SparkJobUtils}
@@ -39,13 +29,6 @@ import spray.io.ServerSSLEngineProvider
 import spray.json.DefaultJsonProtocol._
 import spray.routing.directives.AuthMagnet
 import spray.routing.{HttpService, RequestContext, Route}
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/WebApi.scala
-=======
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Try
-
-import spark.jobserver.common.akka.web.{CommonRoutes, WebService}
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/WebApi.scala
 
 
 object WebApi {
@@ -142,11 +125,7 @@ class WebApi(system: ActorSystem,
   import WebApi._
 
   // Get spray-json type classes for serializing Map[String, Any]
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/WebApi.scala
-  import JsonUtils._
-=======
   import spark.jobserver.common.akka.web.JsonUtils._
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/WebApi.scala
 
   override def actorRefFactory: ActorSystem = system
   implicit val ec: ExecutionContext = system.dispatcher

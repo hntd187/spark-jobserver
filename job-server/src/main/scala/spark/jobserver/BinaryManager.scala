@@ -1,30 +1,19 @@
 package spark.jobserver
 
 import java.nio.file.{Files, Paths}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import akka.pattern._
+
 import akka.actor.ActorRef
+import akka.pattern._
 import akka.util.Timeout
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/BinaryManager.scala
 import org.joda.time.DateTime
 import spark.jobserver.common.akka.InstrumentedActor
 import spark.jobserver.io.JobDAOActor.SaveBinaryResult
 import spark.jobserver.io.{BinaryType, JobDAOActor}
 import spark.jobserver.util.JarUtils
-=======
-import spark.jobserver.io.JobDAOActor.SaveBinaryResult
-import spark.jobserver.io.{BinaryType, JobDAO, JobDAOActor}
-import spark.jobserver.util.JarUtils
-import org.joda.time.DateTime
-import java.nio.file.{Files, Paths}
-
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
-
-import spark.jobserver.common.akka.InstrumentedActor
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/BinaryManager.scala
 
 // Messages to JarManager actor
 

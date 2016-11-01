@@ -51,7 +51,7 @@ trait PythonContextLike extends ContextLike {
 trait PythonContextFactory extends SparkContextFactory {
 
   type J = PythonJobContainer[C]
-
+  override type JC = PythonJobInfo
   override type C <: PythonContextLike
 
   /**

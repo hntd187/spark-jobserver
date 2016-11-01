@@ -7,11 +7,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
 import spark.jobserver.common.akka.InstrumentedActor
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/JobInfoActor.scala
 import spark.jobserver.io.JobDAO
-=======
-import spark.jobserver.io.{JobDAO, JobInfo}
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/JobInfoActor.scala
 
 object JobInfoActor {
 

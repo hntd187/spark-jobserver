@@ -1,29 +1,15 @@
 package spark.jobserver
 
+import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
+
 import akka.actor.{ActorRef, PoisonPill, Props, Terminated}
 import akka.pattern.ask
 import akka.util.Timeout
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/LocalContextSupervisorActor.scala
 import com.typesafe.config.{Config, ConfigFactory}
 import spark.jobserver.JobManagerActor.{SparkContextAlive, SparkContextDead, SparkContextStatus}
 import spark.jobserver.common.akka.InstrumentedActor
-=======
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import spark.jobserver.JobManagerActor.{SparkContextAlive, SparkContextDead, SparkContextStatus}
-import spark.jobserver.io.JobDAO
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/LocalContextSupervisorActor.scala
 import spark.jobserver.util.SparkJobUtils
-
-import scala.collection.mutable
-import scala.util.{Failure, Success, Try}
-<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/main/scala/spark/jobserver/LocalContextSupervisorActor.scala
-=======
-
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-import spark.jobserver.common.akka.InstrumentedActor
->>>>>>> Project Structure Updated (#626):job-server/src/main/scala/spark/jobserver/LocalContextSupervisorActor.scala
 
 /** Messages common to all ContextSupervisors */
 object ContextSupervisor {
@@ -78,10 +64,10 @@ object ContextSupervisor {
  * }}}
  */
 class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
-  import ContextSupervisor._
-
   import scala.collection.JavaConverters._
   import scala.concurrent.duration._
+
+  import ContextSupervisor._
 
   val config = context.system.settings.config
   val defaultContextConfig = config.getConfig("spark.context-settings")
