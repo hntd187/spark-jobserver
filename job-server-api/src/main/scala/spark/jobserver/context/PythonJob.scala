@@ -1,14 +1,13 @@
-package spark.jobserver.python
+package spark.jobserver.context
+
+import scala.sys.process.{Process, ProcessLogger}
+import scala.util.{Failure, Success, Try}
 
 import com.typesafe.config.Config
-import org.scalactic.{Good, Every, Or}
+import org.scalactic.{Every, Good, Or}
 import org.slf4j.LoggerFactory
 import py4j.GatewayServer
-import spark.jobserver.api.{SparkJobBase, ValidationProblem, JobEnvironment}
-
-import scala.sys.process.{ProcessLogger, Process}
-import scala.util.{Failure, Success, Try}
-import scala.collection.JavaConverters._
+import spark.jobserver.api.{JobEnvironment, SparkJobBase, ValidationProblem}
 
 case class PythonJob[X <: PythonContextLike](eggPath: String,
                                              modulePath:String,

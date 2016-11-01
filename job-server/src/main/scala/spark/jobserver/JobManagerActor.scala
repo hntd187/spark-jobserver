@@ -4,6 +4,10 @@ import java.net.{URI, URL}
 import java.util.concurrent.Executors._
 import java.util.concurrent.atomic.AtomicInteger
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
+
 import akka.actor.{ActorRef, PoisonPill, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -17,9 +21,6 @@ import spark.jobserver.common.akka.InstrumentedActor
 import spark.jobserver.context._
 import spark.jobserver.io._
 import spark.jobserver.util.{ContextURLClassLoader, SparkJobUtils}
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 
 object JobManagerActor {
   // Messages
@@ -76,10 +77,10 @@ object JobManagerActor {
 
 class JobManagerActor(contextConfig: Config, daoActor: ActorRef) extends InstrumentedActor {
 
+  import collection.JavaConverters._
+
   import CommonMessages._
   import JobManagerActor._
-
-  import collection.JavaConverters._
 
   val config = context.system.settings.config
   private val maxRunningJobs = SparkJobUtils.getMaxRunningJobs(config)
@@ -219,10 +220,10 @@ class JobManagerActor(contextConfig: Config, daoActor: ActorRef) extends Instrum
       daoAskTimeout.duration)
 
     val lastUploadTimeAndType = resp.uploadTimeAndType
-    if (!lastUploadTimeAndType.isDefined) return failed(NoSuchApplication)
+    if (lastUploadTimeAndType.isEmpty) return failed(NoSuchApplication)
     val (lastUploadTime, binaryType) = lastUploadTimeAndType.get
 
-    val jobId = java.util.UUID.randomUUID().toString()
+    val jobId = java.util.UUID.randomUUID().toString
     val jobContainer = factory.loadAndValidateJob(appName, lastUploadTime,
                                                   classPath, jobCache) match {
       case Good(container)       => container
@@ -238,8 +239,14 @@ class JobManagerActor(contextConfig: Config, daoActor: ActorRef) extends Instrum
 
     val binInfo = BinaryInfo(appName, binaryType, lastUploadTime)
     val jobInfo = JobInfo(jobId, contextName, binInfo, classPath, DateTime.now(), None, None)
-
-    Some(getJobFuture(jobContainer, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+    jobContainer match {
+      case j: ScalaJobContainer =>
+        Some(getJobFuture[api.SparkJobBase](j, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+      case j: JavaJobContainer =>
+        Some(getJobFuture[api.JSparkJob[_, _]](j, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+      case (j: PythonJobContainer[PythonContextLike] @unchecked) =>
+        Some(getJobFuture[PythonJob[PythonContextLike]](j, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+    }
   }
 
   private def getJobFuture[C](container: JobContainer[C],

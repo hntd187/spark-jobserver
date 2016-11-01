@@ -2,51 +2,22 @@ package spark.jobserver.python
 
 import java.io.File
 
-import com.typesafe.config.Config
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.hive.HiveContext
-import org.apache.spark.{SparkContext, SparkConf}
-import org.apache.spark.api.java.JavaSparkContext
-import org.joda.time.DateTime
-import org.scalactic.{Good, Bad, Or}
-import org.slf4j.LoggerFactory
-import spark.jobserver.JobManagerActor.ContextConfig
-import spark.jobserver.util.SparkJobUtils
-import spark.jobserver._
-import spark.jobserver.context.{JobLoadError, LoadingError, SparkContextFactory}
 import scala.collection.JavaConverters._
-
 import scala.util.{Failure, Success, Try}
 
-trait PythonContextLike extends ContextLike {
+import com.typesafe.config.Config
+import org.apache.spark.api.java.JavaSparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.{SparkConf, SparkContext}
+import org.joda.time.DateTime
+import org.scalactic.{Bad, Good, Or}
+import org.slf4j.LoggerFactory
+import spark.jobserver._
+import spark.jobserver.context._
+import spark.jobserver.util.SparkJobUtils
 
-  /**
-    * The Python Subprocess needs to know what sort of context to build from the JVM context.
-    * It can't interrogate the JVM type system, so this method is used as an explicit indicator.
-    *
-    * @return the full canonical class name of the context type
-    */
-  def contextType: String
 
-  /**
-    *
-    * @return The entries with which to populate the PYTHONPATH environment variable when
-    *         launching the python subprocess.
-    */
-  def pythonPath: Seq[String]
-
-  /**
-    * Which process to call to execute the Python interpreter, e.g `python`, `python3`
-    *
-    * @return the executable to call
-    */
-  def pythonExecutable: String
-
-  /**
-    * Any mutable actions which need to be taken before the context is used.
-    */
-  def setupTasks(): Unit
-}
 
 trait PythonContextFactory extends SparkContextFactory {
 

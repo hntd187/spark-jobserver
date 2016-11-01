@@ -7,11 +7,11 @@ trait SparkJobInfo
 
 case class JobJarInfo(constructor: () => api.SparkJobBase,
                       className: String,
-                      jarFilePath: String) extends BinaryJobInfo
+                      jarFilePath: String) extends SparkJobInfo with BinaryJobInfo
 
 case class JavaJarInfo(constructor: () => JSparkJob[_, _],
                        className: String,
-                       jarFilePath: String) extends SparkJobInfo {
+                       jarFilePath: String) extends SparkJobInfo with BinaryJobInfo {
   def job(): JSparkJob[_, _] = constructor.apply()
 }
 

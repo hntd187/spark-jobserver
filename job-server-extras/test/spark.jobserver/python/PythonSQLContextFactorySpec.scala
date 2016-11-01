@@ -3,8 +3,10 @@ package spark.jobserver.python
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.SQLContext
 import org.joda.time.DateTime
-import org.scalatest.{BeforeAndAfter, Matchers, FunSpec}
+import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 import scala.collection.JavaConverters._
+
+import spark.jobserver.context.{PythonContextLike, PythonJob, PythonJobContainer}
 
 class PythonSQLContextFactorySpec extends FunSpec with Matchers with BeforeAndAfter{
 

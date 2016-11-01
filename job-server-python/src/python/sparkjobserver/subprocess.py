@@ -10,7 +10,7 @@ The JVM gateway should include an endpoint method through which
 this program can retrieve an object containing information about
 the Job to be run. Since Python is not strongly typed, the endpoint
 can be any type of JVM object.
-The case class `spark.jobserver.python.JobEndpoint`
+The case class `spark.jobserver.context.JobEndpoint`
 implements all the methods that this program expects an endpoint to have.
 """
 

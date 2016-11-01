@@ -12,6 +12,8 @@ import spark.jobserver.api.JobEnvironment
 import scala.concurrent.duration.FiniteDuration
 import scala.collection.JavaConverters._
 
+import spark.jobserver.context.{PythonContextLike, PythonJob, PythonJobContainer}
+
 case class DummyJobEnvironment(jobId: String, contextConfig: Config) extends JobEnvironment {
 
   /*

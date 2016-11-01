@@ -8,6 +8,7 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.slf4j.LoggerFactory
 import spark.jobserver.common.akka.actor.ProductionReaper
 import spark.jobserver.common.akka.actor.Reaper.WatchMe
+import spark.jobserver.io.{JobDAO, JobDAOActor}
 
 /**
  * The JobManager is the main entry point for the forked JVM process running an individual

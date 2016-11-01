@@ -1,10 +1,8 @@
-package spark.jobserver.python
+package spark.jobserver.context
 
-import com.typesafe.config.{ConfigRenderOptions, Config}
+import com.typesafe.config.{Config, ConfigRenderOptions}
 import org.apache.spark.SparkConf
-import spark.jobserver.api.JobEnvironment
 import scala.collection.JavaConverters._
-
 /**
   * The target for all communications between the Spark Job Server and the underlying python subprocess.
   *

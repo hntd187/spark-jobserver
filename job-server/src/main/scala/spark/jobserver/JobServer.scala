@@ -2,15 +2,16 @@ package spark.jobserver
 
 import java.io.File
 
-import spark.jobserver.io.{BinaryType, DataFileDAO, JobDAO, JobDAOActor}
-import org.slf4j.LoggerFactory
-import spark.jobserver.io.{DataFileDAO, JobDAO, JobDAOActor}
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+import akka.pattern._
 import akka.actor._
+
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import org.slf4j.LoggerFactory
+import spark.jobserver.io.{BinaryType, DataFileDAO, JobDAO, JobDAOActor}
 /**
  * The Spark Job Server is a web service that allows users to submit and run Spark jobs, check status,
  * and view results.
