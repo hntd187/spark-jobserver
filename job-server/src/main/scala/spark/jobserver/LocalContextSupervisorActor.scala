@@ -1,5 +1,8 @@
 package spark.jobserver
 
+import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
+
 import akka.actor.{ActorRef, PoisonPill, Props, Terminated}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -7,9 +10,6 @@ import com.typesafe.config.{Config, ConfigFactory}
 import spark.jobserver.JobManagerActor.{SparkContextAlive, SparkContextDead, SparkContextStatus}
 import spark.jobserver.common.akka.InstrumentedActor
 import spark.jobserver.util.SparkJobUtils
-
-import scala.collection.mutable
-import scala.util.{Failure, Success, Try}
 
 /** Messages common to all ContextSupervisors */
 object ContextSupervisor {
@@ -64,10 +64,10 @@ object ContextSupervisor {
  * }}}
  */
 class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
-  import ContextSupervisor._
-
   import scala.collection.JavaConverters._
   import scala.concurrent.duration._
+
+  import ContextSupervisor._
 
   val config = context.system.settings.config
   val defaultContextConfig = config.getConfig("spark.context-settings")
@@ -164,9 +164,9 @@ class LocalContextSupervisorActor(dao: ActorRef) extends InstrumentedActor {
                              "context.name" -> name,
                              "context.actorname" -> name).asJava
                        ).withFallback(contextConfig)
-    val ref = context.actorOf(JobManagerActor.props(mergedConfig), name)
+    val ref = context.actorOf(JobManagerActor.props(mergedConfig, dao), name)
     (ref ? JobManagerActor.Initialize(
-      dao, resultActorRef))(Timeout(timeoutSecs.second)).onComplete {
+      resultActorRef))(Timeout(timeoutSecs.second)).onComplete {
       case Failure(e: Exception) =>
         logger.error("Exception after sending Initialize to JobManagerActor", e)
         // Make sure we try to shut down the context in case it gets created anyways

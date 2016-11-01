@@ -7,7 +7,7 @@ import org.scalatest.{FunSpec, Matchers}
 
 class DummyActor extends ActorStack {
   var str = ""
-  def wrappedReceive = {
+  def wrappedReceive: Receive = {
     case s: String => str += s
   }
 

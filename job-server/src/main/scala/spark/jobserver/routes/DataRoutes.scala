@@ -1,18 +1,17 @@
 package spark.jobserver.routes
 
-import java.net.URLDecoder
+import scala.concurrent.ExecutionContext
 
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import spark.jobserver.DataManagerActor._
-import spark.jobserver.common.akka.web.JsonUtils
 import spray.http.{MediaTypes, StatusCodes}
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.json.DefaultJsonProtocol._
 import spray.routing.{HttpService, Route}
-
-import scala.concurrent.ExecutionContext
+import spark.jobserver.WebApi._
+import spark.jobserver.common.akka.web.JsonUtils._
 
 /**
   * Routes for listing, deletion of and storing data files
@@ -25,13 +24,10 @@ import scala.concurrent.ExecutionContext
   */
 trait DataRoutes extends HttpService {
 
-  import spark.jobserver.WebApi._
+
 
   def dataRoutes(dataManager: ActorRef)(implicit ec: ExecutionContext, ShortTimeout: Timeout): Route = {
-    // Get spray-json type classes for serializing Map[String, Any]
-    import JsonUtils._
 
-    // GET /data route returns a JSON map of the stored files and their upload time
     get { ctx =>
       val future = (dataManager ? ListData).mapTo[collection.Set[String]]
       future.map { names =>

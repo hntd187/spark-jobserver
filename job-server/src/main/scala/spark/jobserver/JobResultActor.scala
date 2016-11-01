@@ -1,13 +1,13 @@
 package spark.jobserver
 
+import scala.collection.mutable
+import scala.util.Try
+
 import akka.actor.ActorRef
-import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import spark.jobserver.cache.LRUCache
 import spark.jobserver.common.akka.InstrumentedActor
 import spark.jobserver.common.akka.metrics.YammerMetrics
-
-import scala.collection.mutable
-import scala.util.Try
 
 /**
  * It is an actor to manage results that are returned from jobs.

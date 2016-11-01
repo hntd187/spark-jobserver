@@ -4,6 +4,9 @@ import java.util.NoSuchElementException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.Try
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -12,21 +15,20 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import spark.jobserver.JobManagerActor.JobKilledException
 import spark.jobserver.auth.{AuthInfo, SJSAuthenticator}
 import spark.jobserver.common.akka.web.JsonUtils.AnyJsonFormat
-import spark.jobserver.common.akka.web.{CommonRoutes, JsonUtils, WebService}
-import spark.jobserver.io.{JobInfo, JobStatus}
+import spark.jobserver.common.akka.web.{CommonRoutes, WebService}
+import spark.jobserver.io.{BinaryType, JobInfo, JobStatus}
 import spark.jobserver.routes.DataRoutes
 import spark.jobserver.util.{SSLContextFactory, SparkJobUtils}
+import spray.http.HttpHeaders.`Content-Type`
 import spray.http._
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.io.ServerSSLEngineProvider
 import spray.json.DefaultJsonProtocol._
 import spray.routing.directives.AuthMagnet
 import spray.routing.{HttpService, RequestContext, Route}
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Try
 
 
 object WebApi {
@@ -50,6 +52,8 @@ object WebApi {
 
   def errMap(t: Throwable, status: String) : Map[String, Any] =
     Map(StatusKey -> status, ResultKey -> formatException(t))
+
+  def successMap(msg:String):Map[String,String] = Map(StatusKey -> "SUCCESS", ResultKey -> msg)
 
   def getJobDurationString(info: JobInfo): String =
     info.jobLengthMillis.map { ms => ms / 1000.0 + " secs" }.getOrElse("Job not done yet")
@@ -87,12 +91,16 @@ object WebApi {
     }
 
   def getJobReport(jobInfo: JobInfo, jobStarted: Boolean = false): Map[String, Any] = {
-    val statusMap = if (jobStarted) Map(StatusKey -> JobStatus.Started) else (jobInfo match {
-        case JobInfo(_, _, _, _, _, None, _) => Map(StatusKey -> JobStatus.Running)
-        case JobInfo(_, _, _, _, _, _, Some(ex)) => Map(StatusKey -> JobStatus.Error,
-          ResultKey -> formatException(ex))
-        case JobInfo(_, _, _, _, _, Some(e), None) => Map(StatusKey -> JobStatus.Finished)
-    })
+
+    val statusMap = if (jobStarted) Map(StatusKey -> JobStatus.Started) else jobInfo match {
+      case JobInfo(_, _, _, _, _, None, _) => Map(StatusKey -> JobStatus.Running)
+      case JobInfo(_, _, _, _, _, _, Some(ex)) =>
+        ex match {
+          case e: JobKilledException => Map(StatusKey -> JobStatus.Killed, ResultKey -> formatException(ex))
+          case _ => Map(StatusKey -> JobStatus.Error, ResultKey -> formatException(ex))
+        }
+      case JobInfo(_, _, _, _, _, Some(e), None) => Map(StatusKey -> "FINISHED")
+    }
     Map("jobId" -> jobInfo.jobId,
       "startTime" -> jobInfo.startTime.toString(),
       "classPath" -> jobInfo.classPath,
@@ -104,20 +112,20 @@ object WebApi {
 class WebApi(system: ActorSystem,
              config: Config,
              port: Int,
-             jarManager: ActorRef,
+             binaryManager: ActorRef,
              dataManager: ActorRef,
              supervisor: ActorRef,
              jobInfoActor: ActorRef)
     extends HttpService with CommonRoutes with DataRoutes with SJSAuthenticator with CORSSupport
                         with ChunkEncodedStreamingSupport {
+  import scala.concurrent.duration._
+
   import CommonMessages._
   import ContextSupervisor._
   import WebApi._
 
-  import scala.concurrent.duration._
-
   // Get spray-json type classes for serializing Map[String, Any]
-  import JsonUtils._
+  import spark.jobserver.common.akka.web.JsonUtils._
 
   override def actorRefFactory: ActorSystem = system
   implicit val ec: ExecutionContext = system.dispatcher
@@ -136,7 +144,7 @@ class WebApi(system: ActorSystem,
   val logger = LoggerFactory.getLogger(getClass)
 
   val myRoutes = cors {
-    jarRoutes ~ contextRoutes ~ jobRoutes ~
+    binaryRoutes ~ jarRoutes ~ contextRoutes ~ jobRoutes ~
       dataRoutes ~ healthzRoutes ~ otherRoutes
   }
 
@@ -184,17 +192,88 @@ class WebApi(system: ActorSystem,
     WebService.start(myRoutes ~ commonRoutes, system, bindAddress, port)
   }
 
+  val contentType =
+    optionalHeaderValue {
+      case `Content-Type`(ct) => Some(ct)
+      case _ => None
+    }
+
+  /**
+    * Routes for listing and uploading binaries
+    *    GET /binaries              - lists all current binaries
+    *    POST /binaries/<appName>   - upload a new binary file
+    *
+    * NB when POSTing new binaries, the content-type header must
+    * be set to one of the types supported by the subclasses of the
+    * `BinaryType` trait. e.g. "application/java-archive" or
+    * application/python-archive" (may be expanded to support other types
+    * in future.
+    *
+    */
+  def binaryRoutes: Route = pathPrefix("binaries") {
+    // user authentication
+    authenticate(authenticator) { authInfo =>
+      // GET /binaries route returns a JSON map of the app name
+      // and the type of and last upload time of a binary.
+      get { ctx =>
+        val future = (binaryManager ? ListBinaries(None)).
+          mapTo[collection.Map[String, (BinaryType, DateTime)]]
+        future.map { binTimeMap =>
+          val stringTimeMap = binTimeMap.map {
+            case (app, (binType, dt)) =>
+              (app, Map("binary-type" -> binType.name, "upload-time" -> dt.toString()))
+          }.toMap
+          ctx.complete(stringTimeMap)
+        }.recover {
+          case e: Exception => ctx.complete(500, errMap(e, "ERROR"))
+        }
+      } ~
+      // POST /binaries/<appName>
+      // The <appName> needs to be unique; uploading a jar with the same appName will replace it.
+      // requires a recognised content-type header
+      post {
+        path(Segment) { appName =>
+          entity(as[Array[Byte]]) { binBytes =>
+            contentType {
+              case Some(x) =>
+                respondWithMediaType(MediaTypes.`application/json`) { ctx =>
+                  BinaryType.fromMediaType(x.mediaType) match {
+                    case Some(binaryType) =>
+                      val future = binaryManager ? StoreBinary(appName, binaryType, binBytes)
+
+                      future.map {
+                        case BinaryStored => ctx.complete(StatusCodes.OK)
+                        case InvalidBinary => badRequest(ctx, "Binary is not of the right format")
+                        case BinaryStorageFailure(ex) => ctx.complete(500, errMap(ex, "Storage Failure"))
+                      }.recover {
+                        case e: Exception => ctx.complete(500, errMap(e, "ERROR"))
+                      }
+                    case None => ctx.complete(415, s"Unsupported binary type ${x}")
+                  }
+                }
+              case None => complete(415, s"Content-Type header must be set to indicate binary type")
+            }
+          }
+        }
+      }
+    }
+  }
+
   /**
    * Routes for listing and uploading jars
    *    GET /jars              - lists all current jars
    *    POST /jars/<appName>   - upload a new jar file
+   *
+   * NB these routes are kept for legacy purposes but are deprecated in favour
+   *  of the /binaries routes.
    */
   def jarRoutes: Route = pathPrefix("jars") {
     // user authentication
     authenticate(authenticator) { authInfo =>
       // GET /jars route returns a JSON map of the app name and the last time a jar was uploaded.
       get { ctx =>
-        val future = (jarManager ? ListJars).mapTo[collection.Map[String, DateTime]]
+        val future = (binaryManager ? ListBinaries(Some(BinaryType.Jar))).
+          mapTo[collection.Map[String, (BinaryType, DateTime)]].map(_.mapValues(_._2))
         future.map { jarTimeMap =>
           val stringTimeMap = jarTimeMap.map { case (app, dt) => (app, dt.toString()) }.toMap
           ctx.complete(stringTimeMap)
@@ -207,11 +286,12 @@ class WebApi(system: ActorSystem,
         post {
           path(Segment) { appName =>
             entity(as[Array[Byte]]) { jarBytes =>
-              val future = jarManager ? StoreJar(appName, jarBytes)
+              val future = binaryManager ? StoreBinary(appName, BinaryType.Jar, jarBytes)
               respondWithMediaType(MediaTypes.`application/json`) { ctx =>
                 future.map {
-                  case JarStored  => ctx.complete(StatusCodes.OK)
-                  case InvalidJar => badRequest(ctx, "Jar is not of the right format")
+                  case BinaryStored  => ctx.complete(StatusCodes.OK, successMap("Jar uploaded"))
+                  case InvalidBinary => badRequest(ctx, "Jar is not of the right format")
+                  case BinaryStorageFailure(ex) => ctx.complete(500, errMap(ex, "Storage Failure"))
                 }.recover {
                   case e: Exception => ctx.complete(500, errMap(e, "ERROR"))
                 }
@@ -281,7 +361,8 @@ class WebApi(system: ActorSystem,
                 val future = (supervisor ? AddContext(cName, config))(contextTimeout.seconds)
                 respondWithMediaType(MediaTypes.`application/json`) { ctx =>
                   future.map {
-                    case ContextInitialized   => ctx.complete(StatusCodes.OK)
+                    case ContextInitialized   => ctx.complete(StatusCodes.OK,
+                      successMap("Context initialized"))
                     case ContextAlreadyExists => badRequest(ctx, "context " + contextName + " exists")
                     case ContextInitError(e)  => ctx.complete(500, errMap(e, "CONTEXT INIT ERROR"))
                   }
@@ -298,9 +379,9 @@ class WebApi(system: ActorSystem,
           path(Segment) { (contextName) =>
             val (cName, _) = determineProxyUser(config, authInfo, contextName)
             val future = supervisor ? StopContext(cName)
-            respondWithMediaType(MediaTypes.`text/plain`) { ctx =>
+            respondWithMediaType(MediaTypes.`application/json`) { ctx =>
               future.map {
-                case ContextStopped => ctx.complete(StatusCodes.OK)
+                case ContextStopped => ctx.complete(StatusCodes.OK, successMap("Context stopped"))
                 case NoSuchContext  => notFound(ctx, "context " + contextName + " not found")
               }
             }
@@ -308,7 +389,7 @@ class WebApi(system: ActorSystem,
         } ~
         put {
           parameter("reset") { reset =>
-            respondWithMediaType(MediaTypes.`text/plain`) { ctx =>
+            respondWithMediaType(MediaTypes.`application/json`) { ctx =>
               reset match {
                 case "reboot" => {
                   import java.util.concurrent.TimeUnit
@@ -329,7 +410,7 @@ class WebApi(system: ActorSystem,
                   (supervisor ? AddContextsFromConfig).onFailure {
                     case t => ctx.complete("ERROR")
                   }
-                  ctx.complete(StatusCodes.OK)
+                  ctx.complete(StatusCodes.OK, successMap("Context reset"))
                 }
                 case _ => ctx.complete("ERROR")
               }
@@ -424,14 +505,14 @@ class WebApi(system: ActorSystem,
           }
         } ~
         //  DELETE /jobs/<jobId>
-        //  Stop the current job. All other jobs submited with this spark context
+        //  Stop the current job. All other jobs submitted with this spark context
         //  will continue to run
         (delete & path(Segment)) { jobId =>
           val future = jobInfoActor ? GetJobStatus(jobId)
           respondWithMediaType(MediaTypes.`application/json`) { ctx =>
             future.map {
               case NoSuchJobId =>
-                notFound(ctx, "No such job ID " + jobId.toString)
+                notFound(ctx, "No such job ID " + jobId)
               case JobInfo(_, contextName, _, classPath, _, None, _) =>
                 val jobManager = getJobManagerForContext(Some(contextName), config, classPath)
                 jobManager.get ! KillJob(jobId)
@@ -455,8 +536,7 @@ class WebApi(system: ActorSystem,
          *     "jobId": "5453779a-f004-45fc-a11d-a39dae0f9bf4"
          *   }
          * ]
-          *
-          * @optional @param limit Int - optional limit to number of jobs to display, defaults to 50
+         * @optional @param limit Int - optional limit to number of jobs to display, defaults to 50
          */
         get {
           parameters('limit.as[Int] ?, 'status.as[String] ?) { (limitOpt, statusOpt) =>
@@ -509,13 +589,15 @@ class WebApi(system: ActorSystem,
                       JobManagerActor.StartJob(appName, classPath, jobConfig, events))(timeout)
                     respondWithMediaType(MediaTypes.`application/json`) { ctx =>
                       future.map {
-                        case JobResult(_, res) =>
+                        case JobResult(jobId, res) =>
                           res match {
                             case s: Stream[_] => sendStreamingResponse(ctx, ResultChunkSize,
                               resultToByteIterator(Map.empty, s.toIterator))
-                            case _ => ctx.complete(resultToTable(res))
+                            case _ => ctx.complete(Map[String, Any]("jobId" -> jobId) ++ resultToTable(res))
                           }
-                        case JobErroredOut(_, _, ex) => ctx.complete(errMap(ex, "ERROR"))
+                        case JobErroredOut(jobId, _, ex) => ctx.complete(
+                          Map[String, String]("jobId" -> jobId) ++ errMap(ex, "ERROR")
+                        )
                         case JobStarted(_, jobInfo) =>
                           jobInfoActor ! StoreJobConfig(jobInfo.jobId, postedJobConfig)
                           ctx.complete(202, getJobReport(jobInfo, true))

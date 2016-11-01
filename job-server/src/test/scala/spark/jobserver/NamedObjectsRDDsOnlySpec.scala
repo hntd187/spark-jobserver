@@ -2,8 +2,13 @@ package spark.jobserver
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/NamedObjectsRDDsOnlySpec.scala
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
+=======
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.storage.StorageLevel
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/NamedObjectsRDDsOnlySpec.scala
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
 import spark.jobserver.common.akka.AkkaTestUtils
 

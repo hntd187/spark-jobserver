@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 import spark.jobserver.api.JSparkJob
 import spark.jobserver.util.SparkJobUtils
 import spark.jobserver.{ContextLike, JobCache}
-
+import scala.language.existentials
 
 class JavaContextFactory extends SparkContextFactory {
   type C = JavaSparkContext with ContextLike

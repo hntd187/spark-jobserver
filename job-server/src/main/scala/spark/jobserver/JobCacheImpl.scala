@@ -4,6 +4,11 @@ import java.io.File
 import java.net.URL
 import java.util.UUID
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.Try
+
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
@@ -13,14 +18,9 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import spark.jobserver.api.JSparkJob
 import spark.jobserver.cache.Cache
-import spark.jobserver.io.JobDAOActor
-import spark.jobserver.io.JobDAOActor.JarPath
+import spark.jobserver.io.JobDAOActor.BinaryPath
+import spark.jobserver.io.{BinaryType, JobDAOActor}
 import spark.jobserver.util.{ContextURLClassLoader, JarUtils}
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.Try
 
 class JobCacheImpl(cacheConfig: Config, dao: ActorRef, ctx: SparkContext, loader: ContextURLClassLoader)
   extends JobCache {
@@ -33,8 +33,8 @@ class JobCacheImpl(cacheConfig: Config, dao: ActorRef, ctx: SparkContext, loader
   private val logger = LoggerFactory.getLogger(getClass)
   private val cache = JarUtils.loadClassWithArgs[CacheType](cacheDriver, cacheConfig)
 
-  private def getJarPath(name: String, uploadTime: DateTime): Future[JarPath] = {
-    (dao ? JobDAOActor.GetJarPath(name, uploadTime)).mapTo[JobDAOActor.JarPath]
+  private def getJarPath(name: String, uploadTime: DateTime): Future[BinaryPath] = {
+    (dao ? JobDAOActor.GetBinaryPath(name, BinaryType.Jar, uploadTime)).mapTo[JobDAOActor.BinaryPath]
   }
 
   private def generateCacheId(name: String, uploadTime: DateTime, classPath: String): String = {
@@ -43,7 +43,7 @@ class JobCacheImpl(cacheConfig: Config, dao: ActorRef, ctx: SparkContext, loader
 
   private def getJavaViaDao(appName: String, uploadTime: DateTime, classPath: String): Future[JavaJarInfo] = {
     getJarPath(appName, uploadTime)
-      .map(j => j.jarPath)
+      .map(j => j.binPath)
       .map(f => new File(f).getAbsolutePath)
       .map { path =>
         ctx.addJar(path)
@@ -55,7 +55,7 @@ class JobCacheImpl(cacheConfig: Config, dao: ActorRef, ctx: SparkContext, loader
 
   private def getJobViaDao(appName: String, uploadTime: DateTime, classPath: String): Future[JobJarInfo] = {
     getJarPath(appName, uploadTime)
-      .map(j => j.jarPath)
+      .map(j => j.binPath)
       .map(f => new File(f).getAbsolutePath)
       .map { path =>
         ctx.addJar(path)
@@ -88,4 +88,15 @@ class JobCacheImpl(cacheConfig: Config, dao: ActorRef, ctx: SparkContext, loader
       Await.result(getJavaViaDao(appName, uploadTime, classPath), daoAskTimeout.duration)
     }
   }
+
+  def getPythonJob(appName: String, uploadTime: DateTime, classPath: String): PythonJobInfo = {
+    cache.getOrPut(generateCacheId(appName, uploadTime, classPath), {
+      val pyPathReq =
+        (dao ? JobDAOActor.GetBinaryPath(appName, BinaryType.Egg, uploadTime)).mapTo[JobDAOActor.BinaryPath]
+      val pyPath = Await.result(pyPathReq, daoAskTimeout.duration).binPath
+      val pyFilePath = new java.io.File(pyPath).getAbsolutePath
+      PythonJobInfo(pyFilePath)
+    }).asInstanceOf[PythonJobInfo]
+  }
+
 }

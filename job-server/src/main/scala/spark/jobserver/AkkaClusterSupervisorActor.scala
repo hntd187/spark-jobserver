@@ -5,6 +5,10 @@ import java.nio.charset.Charset
 import java.nio.file.{Files, Paths}
 import java.util.concurrent.TimeUnit
 
+import scala.collection.mutable
+import scala.sys.process._
+import scala.util.{Failure, Success, Try}
+
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.{InitialStateAsEvents, MemberEvent, MemberUp}
@@ -12,10 +16,6 @@ import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import spark.jobserver.common.akka.InstrumentedActor
 import spark.jobserver.util.SparkJobUtils
-
-import scala.collection.mutable
-import scala.sys.process._
-import scala.util.{Failure, Success, Try}
 
 /**
  * The AkkaClusterSupervisorActor launches Spark Contexts as external processes
@@ -36,10 +36,10 @@ import scala.util.{Failure, Success, Try}
  * }}}
  */
 class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
-  import ContextSupervisor._
-
   import scala.collection.JavaConverters._
   import scala.concurrent.duration._
+
+  import ContextSupervisor._
 
   val config = context.system.settings.config
   val defaultContextConfig = config.getConfig("spark.context-settings")
@@ -151,7 +151,9 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
     case StopContext(name) =>
       if (contexts contains name) {
         logger.info("Shutting down context {}", name)
-        contexts(name)._1 ! PoisonPill
+        val contextActorRef = contexts(name)._1
+        cluster.down(contextActorRef.path.address)
+        contextActorRef ! PoisonPill
         sender ! ContextStopped
       } else {
         sender ! NoSuchContext
@@ -171,7 +173,7 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
 
     val resultActor = if (isAdHoc) globalResultActor else context.actorOf(Props(classOf[JobResultActor]))
     (ref ? JobManagerActor.Initialize(
-      daoActor, Some(resultActor)))(Timeout(timeoutSecs.second)).onComplete {
+      Some(resultActor)))(Timeout(timeoutSecs.second)).onComplete {
       case Failure(e:Exception) =>
         logger.info("Failed to send initialize message to context " + ref, e)
         ref ! PoisonPill

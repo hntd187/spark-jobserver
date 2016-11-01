@@ -2,12 +2,23 @@ package spark.jobserver
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
+<<<<<<< cc3b6f4bd857b7cac529f2c5f9b34de46b17c9e7:job-server-extras/src/test/scala/spark.jobserver/NamedObjectsSpec.scala
+=======
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.types._
+>>>>>>> Remove akka dependency from api module:job-server-extras/test/spark.jobserver/NamedObjectsSpec.scala
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.storage.StorageLevel
+<<<<<<< cc3b6f4bd857b7cac529f2c5f9b34de46b17c9e7:job-server-extras/src/test/scala/spark.jobserver/NamedObjectsSpec.scala
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
+=======
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
+import scala.concurrent.duration.{FiniteDuration, _}
+>>>>>>> Remove akka dependency from api module:job-server-extras/test/spark.jobserver/NamedObjectsSpec.scala
 
 /**
  * this Spec is a more complex version of the same one in the job-server project,
@@ -111,7 +122,7 @@ class NamedObjectsSpec extends TestKit(ActorSystem("NamedObjectsSpec")) with Fun
       val df2: NamedDataFrame = namedObjects.getOrElseCreate("df", {
         generatorCalled = true
         throw new RuntimeException("ERROR")
-      })(1234, dataFramePersister)
+      })(FiniteDuration(1234, MILLISECONDS), dataFramePersister)
       generatorCalled should equal(false)
       df2 should equal(df1)
     }
@@ -167,7 +178,7 @@ class NamedObjectsSpec extends TestKit(ActorSystem("NamedObjectsSpec")) with Fun
             obj = Some(r)
             //System.err.println("creator finished")
             r
-          })(99, dataFramePersister)
+          })(FiniteDuration(99, MILLISECONDS), dataFramePersister)
         }
       }
 
@@ -176,7 +187,7 @@ class NamedObjectsSpec extends TestKit(ActorSystem("NamedObjectsSpec")) with Fun
           //System.err.println(ix + " started")
           namedObjects.getOrElseCreate("sleep", {
             throw new IllegalArgumentException("boo!")
-          })(60, dataFramePersister)
+          })(FiniteDuration(60, MILLISECONDS), dataFramePersister)
         }
       }
       creatorThread.start()

@@ -1,8 +1,14 @@
 package spark.jobserver.common.akka.actor
 
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:akka-app/src/test/scala/spark/jobserver/common/akka/actor/ReaperSpec.scala
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, MustMatchers}
+=======
+import akka.actor.{ActorSystem, Props, ActorRef}
+import akka.testkit.{TestKit, ImplicitSender, TestProbe}
+import org.scalatest.{MustMatchers, FunSpecLike, BeforeAndAfterAll}
+>>>>>>> Project Structure Updated (#626):akka-app/src/test/scala/spark/jobserver/common/akka/actor/ReaperSpec.scala
 
 // Our test reaper.  Sends the snooper a message when all
 // the souls have been reaped

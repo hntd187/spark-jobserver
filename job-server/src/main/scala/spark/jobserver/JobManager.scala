@@ -8,6 +8,7 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.slf4j.LoggerFactory
 import spark.jobserver.common.akka.actor.ProductionReaper
 import spark.jobserver.common.akka.actor.Reaper.WatchMe
+import spark.jobserver.io.{JobDAO, JobDAOActor}
 
 /**
  * The JobManager is the main entry point for the forked JVM process running an individual
@@ -43,12 +44,18 @@ object JobManager {
     } else {
       defaultConfig
     }
+
+    val system = makeSystem(config.resolve())
+    val clazz = Class.forName(config.getString("spark.jobserver.jobdao"))
+    val ctor = clazz.getDeclaredConstructor(Class.forName("com.typesafe.config.Config"))
+    val jobDAO = ctor.newInstance(config).asInstanceOf[JobDAO]
+    val daoActor = system.actorOf(Props(classOf[JobDAOActor], jobDAO), "dao-manager-jobmanager")
+
     logger.info("Starting JobManager named " + managerName + " with config {}",
       config.getConfig("spark").root.render())
     logger.info("..and context config:\n" + contextConfig.root.render)
 
-    val system = makeSystem(config.resolve())
-    val jobManager = system.actorOf(JobManagerActor.props(contextConfig), managerName)
+    val jobManager = system.actorOf(JobManagerActor.props(contextConfig, daoActor), managerName)
 
     //Join akka cluster
     logger.info("Joining cluster at address {}", clusterAddress)

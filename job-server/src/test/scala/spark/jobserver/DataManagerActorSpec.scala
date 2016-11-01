@@ -1,10 +1,19 @@
 package spark.jobserver
 
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/DataManagerActorSpec.scala
 import java.nio.file.Files
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
+=======
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.testkit.{ImplicitSender, TestKit}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
+import java.nio.file.Files
+
+import spark.jobserver.common.akka
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/DataManagerActorSpec.scala
 import spark.jobserver.common.akka.AkkaTestUtils
 import spark.jobserver.io.DataFileDAO
 
@@ -26,7 +35,11 @@ class DataManagerActorSpec extends TestKit(DataManagerActorSpec.system) with Imp
   override def afterAll() {
     dao.shutdown()
     AkkaTestUtils.shutdownAndWait(actor)
+<<<<<<< cec1d5d76bb608f0421c158a8701d41cdd60a757:job-server/src/test/scala/spark/jobserver/DataManagerActorSpec.scala
     common.akka.AkkaTestUtils.shutdownAndWait(DataManagerActorSpec.system)
+=======
+    akka.AkkaTestUtils.shutdownAndWait(DataManagerActorSpec.system)
+>>>>>>> Project Structure Updated (#626):job-server/src/test/scala/spark/jobserver/DataManagerActorSpec.scala
     Files.delete(tmpDir.resolve(DataFileDAO.META_DATA_FILE_NAME))
     Files.delete(tmpDir)
   }

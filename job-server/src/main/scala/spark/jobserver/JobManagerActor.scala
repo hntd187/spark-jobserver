@@ -4,6 +4,10 @@ import java.net.{URI, URL}
 import java.util.concurrent.Executors._
 import java.util.concurrent.atomic.AtomicInteger
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
+
 import akka.actor.{ActorRef, PoisonPill, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -14,20 +18,18 @@ import org.joda.time.DateTime
 import org.scalactic._
 import spark.jobserver.api.{JobEnvironment, JobValidation}
 import spark.jobserver.common.akka.InstrumentedActor
-import spark.jobserver.context.{JobContainer, SparkContextFactory, _}
-import spark.jobserver.io.{JarInfo, JobDAOActor, JobInfo}
+import spark.jobserver.context._
+import spark.jobserver.io._
 import spark.jobserver.util.{ContextURLClassLoader, SparkJobUtils}
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 
 object JobManagerActor {
   // Messages
-  case class Initialize(daoActor: ActorRef, resultActorOpt: Option[ActorRef])
+  case class Initialize(resultActorOpt: Option[ActorRef])
   case class StartJob(appName: String, classPath: String, config: Config,
                       subscribedEvents: Set[Class[_]])
   case class KillJob(jobId: String)
+  case class JobKilledException(jobId: String) extends Exception(s"Job $jobId killed")
+
   case object GetContextConfig
   case object SparkContextStatus
 
@@ -40,7 +42,8 @@ object JobManagerActor {
   case object SparkContextDead
 
   // Akka 2.2.x style actor props for actor creation
-  def props(contextConfig: Config): Props = Props(classOf[JobManagerActor], contextConfig)
+  def props(contextConfig: Config, daoActor: ActorRef): Props = Props(classOf[JobManagerActor],
+    contextConfig, daoActor)
 }
 
 /**
@@ -71,12 +74,13 @@ object JobManagerActor {
   *   }
   * }}}
   */
-class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
+
+class JobManagerActor(contextConfig: Config, daoActor: ActorRef) extends InstrumentedActor {
+
+  import collection.JavaConverters._
 
   import CommonMessages._
   import JobManagerActor._
-
-  import collection.JavaConverters._
 
   val config = context.system.settings.config
   private val maxRunningJobs = SparkJobUtils.getMaxRunningJobs(config)
@@ -102,7 +106,6 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
 
   private var statusActor: ActorRef = _
   protected var resultActor: ActorRef = _
-  private var daoActor: ActorRef = _
   private var factory: SparkContextFactory = _
 
   private val jobServerNamedObjects = new JobServerNamedObjects(context.system)
@@ -122,8 +125,7 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
   }
 
   def wrappedReceive: Receive = {
-    case Initialize(dao, resOpt) =>
-      daoActor = dao
+    case Initialize(resOpt) =>
       statusActor = context.actorOf(JobStatusActor.props(daoActor))
       resultActor = resOpt.getOrElse(context.actorOf(Props[JobResultActor]))
 
@@ -213,15 +215,17 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
     val daoAskTimeout = Timeout(3 seconds)
     // TODO: refactor so we don't need Await, instead flatmap into more futures
     val resp = Await.result(
-      (daoActor ? JobDAOActor.GetLastUploadTime(appName))(daoAskTimeout).mapTo[JobDAOActor.LastUploadTime],
+      (daoActor ? JobDAOActor.GetLastUploadTimeAndType(appName))(daoAskTimeout).
+        mapTo[JobDAOActor.LastUploadTimeAndType],
       daoAskTimeout.duration)
 
-    val lastUploadTime = resp.lastUploadTime
-    if (lastUploadTime.isEmpty) return failed(NoSuchApplication)
+    val lastUploadTimeAndType = resp.uploadTimeAndType
+    if (lastUploadTimeAndType.isEmpty) return failed(NoSuchApplication)
+    val (lastUploadTime, binaryType) = lastUploadTimeAndType.get
 
     val jobId = java.util.UUID.randomUUID().toString
-    val jobContainer = factory.loadAndValidateJob(appName, lastUploadTime.get,
-      classPath, jobCache) match {
+    val jobContainer = factory.loadAndValidateJob(appName, lastUploadTime,
+                                                  classPath, jobCache) match {
       case Good(container)       => container
       case Bad(JobClassNotFound) => return failed(NoSuchClass)
       case Bad(JobWrongType)     => return failed(WrongJobType)
@@ -233,13 +237,15 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
     resultActor ! Subscribe(jobId, sender, events)
     statusActor ! Subscribe(jobId, sender, events)
 
-    val jarInfo = JarInfo(appName, lastUploadTime.get)
-    val jobInfo = JobInfo(jobId, contextName, jarInfo, classPath, DateTime.now(), None, None)
+    val binInfo = BinaryInfo(appName, binaryType, lastUploadTime)
+    val jobInfo = JobInfo(jobId, contextName, binInfo, classPath, DateTime.now(), None, None)
     jobContainer match {
-      case c: ScalaJobContainer =>
-        Some(getJobFuture[api.SparkJobBase](c, jobInfo, jobConfig, sender, jobContext, sparkEnv))
-      case c: JavaJobContainer =>
-        Some(getJobFuture[api.JSparkJob[_,_]](c, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+      case j: ScalaJobContainer =>
+        Some(getJobFuture[api.SparkJobBase](j, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+      case j: JavaJobContainer =>
+        Some(getJobFuture[api.JSparkJob[_, _]](j, jobInfo, jobConfig, sender, jobContext, sparkEnv))
+      case (j: PythonJobContainer[PythonContextLike] @unchecked) =>
+        Some(getJobFuture[PythonJob[PythonContextLike]](j, jobInfo, jobConfig, sender, jobContext, sparkEnv))
     }
   }
 
